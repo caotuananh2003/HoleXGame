@@ -66,6 +66,13 @@ public class HoleSizeController : MonoBehaviour
         // Forward events — dùng named method để unsubscribe đúng
         if (swallowHandler != null)
             swallowHandler.OnObjectSwallowed += ForwardScore;
+
+        Scale = 1;
+        Radius = 1;
+        ApplyScale();
+        holeDetector.SetRadius(Radius);
+        swallowHandler.SetScale(Scale);
+        OnGrown?.Invoke(Scale);
     }
 
     private void OnDestroy()
@@ -79,8 +86,8 @@ public class HoleSizeController : MonoBehaviour
     /// <summary>Tăng scale hole lên 1 bậc. Gọi từ HoleController khi đủ điểm.</summary>
     public void GrowHole()
     {
-        Scale++;
-        Radius++;
+        Scale = Scale * 1.3f;
+        Radius = Radius * 1.3f;
         ApplyScale();
         holeDetector.SetRadius(Radius);
         swallowHandler.SetScale(Scale);

@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Ico Shield _ Particle
+  m_Shader: {fileID: 4800000, guid: 22c68d2e5300d9943afa42bbc0a73137, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _SURFACE_TYPE_TRANSPARENT
+  m_InvalidKeywords:
+  - _RECEIVE_SHADOWS_OFF
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap:
+    RenderType: Transparent
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  - DepthOnly
+  - SHADOWCASTER
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+      _Main_Texture:
+        m_Texture: {fileID: 2800000, guid: 5e2659b9cfef6924f96b4f3719bb6b18, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _SampleTexture2D_2b95e637457941e5a6b823bbaf54b395_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 3bc324a598ac97c44a36eb5f6cc0eb98, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _SampleTexture2D_93b9de676f7447cc8667efd4b77042fd_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 5e2659b9cfef6924f96b4f3719bb6b18, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: {}
+    m_Floats:
+      _AddPrecomputedVelocity: 0
+      _AlphaClip: 0
+      _AlphaToMask: 0
+      _Blend: 2
+      _BlendModePreserveSpecular: 1
+      _BumpScale: 1
+      _CastShadows: 0
+      _ClearCoatMask: 0
+      _ClearCoatSmoothness: 0
+      _Cull: 2
+      _Cutoff: 0.23
+      _DetailAlbedoMapScale: 1
+      _DetailNormalMapScale: 1
+      _DstBlend: 1
+      _DstBlendAlpha: 1
+      _EnvironmentReflections: 1
+      _Float: 1
+      _Freshnel_Intensity: 1.34
+      _GlossMapScale: 0
+      _Glossiness: 0
+      _GlossyReflections: 0
+      _If_Cutoff: 1
+      _If_Cutoff_Par: 1
+      _Limit: 0.339
+      _Limit_Vertex_Scale: 0.5
+      _Metallic: 0
+      _OcclusionStrength: 1
+      _Offset_Intensity: 0
+      _Offset_Speed: 0
+      _Outline_Intensity: 0.17
+      _Parallax: 0.005
+      _QueueControl: 0
+      _QueueOffset: 0
+      _ReceiveShadows: 0
+      _Smoothness: 0.5
+      _SmoothnessTextureChannel: 0
+      _SpecularHighlights: 1
+      _SrcBlend: 5
+      _SrcBlendAlpha: 1
+      _Surface: 1
+      _WorkflowMode: 1
+      _XRMotionVectorsPass: 1
+      _ZTest: 4
+      _ZWrite: 0
+      _ZWriteControl: 0
+    m_Colors:
+      _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+      _Color: {r: 1, g: 1, b: 1, a: 1}
+      _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+      _Emission_Color: {r: 0, g: 40.340393, b: 135.58704, a: 1}
+      _Offset: {r: 0, g: 0.5, b: 0, a: 0}
+      _Outline_Color: {r: 0.09019607, g: 0.76827884, b: 1, a: 1}
+      _Polygon_Color: {r: 0, g: 0.3877623, b: 0.6988598, a: 1}
+      _Polygonn_Color: {r: 0, g: 0, b: 0, a: 0}
+      _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+      _Sweep_Color: {r: 0, g: 748.33905, b: 766.99615, a: 1}
+      _Sweep_Color_Anim: {r: 1, g: 1, b: 1, a: 1}
+      _Sweep_Color_Idle: {r: 0, g: 0.0004730112, b: 0.0007314645, a: 1}
+      _Sweep_Color_Speed: {r: 0, g: 1, b: 0, a: 0}
+      _Sweep_Color_Speed_Anim: {r: 0, g: 0.72, b: 0, a: 0}
+      _Sweep_Color_Speed_Idle: {r: 0, g: 0.1, b: 0, a: 0}
+      _V_Offset: {r: 0, g: 1, b: 0, a: 0}
+      _V_Offset_Speed: {r: 0, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

@@ -26,20 +26,14 @@ public class HoleDetector : MonoBehaviour
     private const int SwallowableLayer = 9;  // Layer Swallowable
     private const int SwallowingLayer  = 10; // Layer Swallowing
 
-    private List<Rigidbody>   victims;
-    //private HoleSizeController sizeController;
+    private List<Rigidbody>   victims; // List rigidbody của victims
     private float radius;
     public void SetRadius(float newRadius)
     {
         radius = newRadius;
     }
 
-    private void Awake()
-    {
-        //sizeController = GetComponent<HoleSizeController>();
-    }
-
-    /// <summary>Gọi từ HoleSizeController.Awake() để inject shared victims list.</summary>
+    // Gọi từ HoleSizeController.Awake() để khởi tạo victims list (Dùng chung, cùng trỏ tới 1 List<Rigidbody> trong bộ nhớ)
     public void Initialize(List<Rigidbody> sharedVictims, float initialRadius)
     {
         victims = sharedVictims;
@@ -50,18 +44,27 @@ public class HoleDetector : MonoBehaviour
     {
         if (victims == null) return;
 
+        // Array các Collider trong bán kính radius
         Collider[] nearby = Physics.OverlapSphere(transform.position, radius);
         foreach (Collider col in nearby)
         {
+            // Bỏ qua chính collider của gameobject đang gắn HoleDetector (player)
             if (col.gameObject == gameObject) continue;
+            // Bỏ qua các collider không phải Swallowable
             if (col.gameObject.layer != SwallowableLayer) continue;
 
             Rigidbody rb = col.GetComponentInParent<Rigidbody>();
-            if (rb == null || victims.Contains(rb)) continue;
+            if (rb == null)
+            {
+                Debug.Log("Swallowable Object has a null rugidbody");
+                continue;
+            }
+
+            if (victims.Contains(rb)) continue;
 
             victims.Add(rb);
             col.gameObject.layer = SwallowingLayer;
-            rb.isKinematic       = false;
+            //rb.isKinematic       = false;
         }
     }
 }

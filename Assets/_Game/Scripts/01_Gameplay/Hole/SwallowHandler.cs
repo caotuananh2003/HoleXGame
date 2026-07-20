@@ -23,14 +23,8 @@ public class SwallowHandler : MonoBehaviour
     {
         scale = newScale;
     }
-    //private HoleSizeController sizeController;
 
-    private void Awake()
-    {
-        //sizeController = GetComponent<HoleSizeController>();
-    }
-
-    /// <summary>Gọi từ HoleSizeController.Awake() để inject shared victims list.</summary>
+    // Gọi từ HoleSizeController.Awake() để khởi tạo victims list (Dùng chung, cùng trỏ tới 1 List<Rigidbody> trong bộ nhớ)
     public void Initialize(List<Rigidbody> sharedVictims, float initialScale)
     {
         victims = sharedVictims;
@@ -42,7 +36,7 @@ public class SwallowHandler : MonoBehaviour
         if (victims == null)
             return;
 
-        for (int i = victims.Count - 1; i >= 0; i--)
+        for (int i = victims.Count - 1; i >= 0; i--) // Chạy ngược lại để khi remove phần tử, không cần thao tác cập nhật lại i
         {
             if (victims[i] == null)
             {
@@ -50,9 +44,20 @@ public class SwallowHandler : MonoBehaviour
                 continue;
             }
 
-            victims[i].AddForce(
-                Vector3.down * scale * swallowGravity * Time.fixedDeltaTime,
-                ForceMode.VelocityChange);
+            Debug.Log($"Removing {victims[i].gameObject.name}");
+            victims[i].gameObject.SetActive(false);
+            victims.RemoveAt(i);
+
+            //victims[i].AddForce(
+            //    Vector3.down * scale * swallowGravity * Time.fixedDeltaTime,
+            //    ForceMode.VelocityChange);
+
+            //// Ví dụ: nếu object đã đi qua lỗ thì disable
+            //if (victims[i].position.y < -5f)
+            //{
+            //    victims[i].gameObject.SetActive(false);
+            //    victims.RemoveAt(i);
+            //}
         }
     }
 

@@ -30,7 +30,7 @@ public class HoleController : MonoBehaviour
     private void Start()
     {
         // Khởi tạo scale ban đầu = 1
-        sizeController.GrowHole();
+        //sizeController.GrowHole();
 
         sizeController.OnScoreAdded += HandleScoreAdded;
     }
