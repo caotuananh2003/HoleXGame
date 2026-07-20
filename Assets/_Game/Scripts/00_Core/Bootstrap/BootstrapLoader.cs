@@ -1,0 +1,55 @@
+﻿using UnityEngine;
+using VContainer;
+
+public class BootstrapLoader : MonoBehaviour
+{
+    [Header("Scene Names (phải khớp với tên file .unity, không có extension)")]
+    //[SerializeField] private string gameplayScene = "Gameplay";
+    [SerializeField] private string MainMenuScene = "MainMenuScene"; // File: MainMenuScene.unity
+    [SerializeField] private const string MainMenuBGMId = "bgm_music";
+
+    private SaveManager saveManager;
+    private AudioManager audioManager;
+    private UIManager uiManager;
+    private GameManager gameManager;
+    private SceneManagerService sceneManagerService;
+
+    [Inject]
+    private void Construct(
+        SaveManager saveManager,
+        AudioManager audioManager,
+        UIManager uiManager,
+        GameManager gameManager,
+        SceneManagerService sceneManagerService)
+    {
+        Debug.Log("BootstrapLoader constructing");
+        this.saveManager = saveManager;
+        this.audioManager = audioManager;
+        this.uiManager = uiManager;
+        this.gameManager = gameManager;
+        this.sceneManagerService = sceneManagerService;
+    }
+
+    private async void Start()
+    {
+        if (gameManager == null)
+        {
+            Debug.Log("gameManager null");
+        }
+        gameManager.ChangeState(GameState.Boot);
+
+        await saveManager.Initialize();
+
+        audioManager.Initialize();
+
+        uiManager.Initialize();
+
+        gameManager.ChangeState(GameState.Loading);
+
+        await sceneManagerService.LoadScene(MainMenuScene);
+
+        gameManager.ChangeState(GameState.MainMenu);
+
+        audioManager.PlayBGM(MainMenuBGMId);
+    }
+}

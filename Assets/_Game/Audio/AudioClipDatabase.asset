@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: AudioClipDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::AudioClipDatabase
+  clips:
+  - id: bgm_music
+    clip: {fileID: 8300000, guid: fa38fa4c1951c3d4abecf1169b690f51, type: 3}
+  - id: sfx_ui_click
+    clip: {fileID: 8300000, guid: 5c4bfe89c8d715d41899bcd09c3ce20f, type: 3}
