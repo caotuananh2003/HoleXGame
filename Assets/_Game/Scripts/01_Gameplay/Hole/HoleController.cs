@@ -1,85 +1,70 @@
 using UnityEngine;
-using VContainer;
 
 /// <summary>
-/// Entry point của player. Điều phối HoleMovement, HoleSizeController.
-/// Gắn vào root GameObject của Hole trong GameplayScene.
+/// Entry point của player. Điều phối HoleMovement và HoleSizeController.
+/// Gắn vào root GameObject của Player trong GameplayScene.
+/// Tự tìm HoleMovement và HoleSizeController bằng GetComponent.
 /// </summary>
-
 [RequireComponent(typeof(HoleMovement))]
 [RequireComponent(typeof(HoleSizeController))]
+[RequireComponent(typeof(SwallowHandler))]
 public class HoleController : MonoBehaviour
 {
-    #region Inject
-    private HoleMovement     holeMovement;
-    private HoleSizeController sizeController;
-
-    [Inject]
-    private void Construct(HoleMovement holeMovement, HoleSizeController holeSizeController)
-    {
-        this.holeMovement = holeMovement;
-        this.sizeController = holeSizeController;
-    }
-    #endregion
+    private HoleMovement       holeMovement;
+    private HoleSizeController holeSizeController;
 
     private int  score;
-    private bool growPending;
+    private bool isGrowing;
 
     public int Score => score;
 
-    private void Start()
+    private void Awake()
     {
-        // Khởi tạo scale ban đầu = 1
-        //sizeController.GrowHole();
-
-        sizeController.OnScoreAdded += HandleScoreAdded;
+        holeMovement   = GetComponent<HoleMovement>();
+        holeSizeController = GetComponent<HoleSizeController>();
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    private void Start()
+    {
+        holeSizeController.OnScoreAdded += HandleScoreAdded;
+    }
 
     public void SetInputEnabled(bool enabled)
     {
         holeMovement?.SetInputEnabled(enabled);
     }
 
-    /// <summary>
-    /// Gọi mỗi frame từ inputManager để di chuyển hole.
-    /// </summary>
+    /// <summary>Gọi mỗi frame từ InputManager để di chuyển hole.</summary>
     public void ApplyInput(Vector2 direction, float magnitude)
     {
         holeMovement?.Move(direction, magnitude);
     }
 
-    /// <summary>
-    /// Gọi khi người dùng nhả tay.
-    /// </summary>
+    /// <summary>Gọi khi người dùng nhả tay.</summary>
     public void OnInputReleased()
     {
         holeMovement?.OnInputReleased();
     }
 
-    // ── Private ───────────────────────────────────────────────────────────────
-
     private void HandleScoreAdded(int amount)
     {
         score += amount;
-        growPending = false;
+        isGrowing = false;
         CheckGrow();
     }
 
     private void CheckGrow()
     {
-        // Grow mỗi 10 điểm
-        if (!growPending && score % 10 == 0)
+        if (!isGrowing && score % 10 == 0)
         {
-            growPending = true;
-            sizeController.GrowHole();
+            Debug.Log("Growing");
+            isGrowing = true;
+            holeSizeController.GrowHole();
         }
     }
 
     private void OnDestroy()
     {
-        if (sizeController != null)
-            sizeController.OnScoreAdded -= HandleScoreAdded;
+        holeSizeController.OnScoreAdded -= HandleScoreAdded;
     }
 }

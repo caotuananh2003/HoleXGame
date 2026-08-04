@@ -7,24 +7,24 @@ using VContainer;
 /// </summary>
 public class InputManager : MonoBehaviour
 {
-    private IInputProvider inputProvider;
+    private TouchJoystickInput touchJoystickInput;
     private HoleController holeController;
 
     [Inject]
-    private void Construct(IInputProvider inputProvider, HoleController holeController)
+    private void Construct(TouchJoystickInput touchJoystickInput, HoleController holeController)
     {
-        this.inputProvider  = inputProvider;
+        this.touchJoystickInput  = touchJoystickInput;
         this.holeController = holeController;
     }
 
     private void Update()
     {
-        if (inputProvider == null || holeController == null) return;
+        if (touchJoystickInput == null || holeController == null) return;
 
-        if (inputProvider.IsActive)
-            holeController.ApplyInput(inputProvider.Direction, inputProvider.Magnitude);
+        if (touchJoystickInput.IsActive)
+            holeController.ApplyInput(touchJoystickInput.Direction, touchJoystickInput.Magnitude);
 
-        if (inputProvider.WasReleasedThisFrame)
+        if (touchJoystickInput.WasReleasedThisFrame)
             holeController.OnInputReleased();
     }
 }

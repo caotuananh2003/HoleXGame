@@ -25,7 +25,6 @@ public class MainmenuPanel : UIWindow
     [Inject]
     private void Construct(MainmenuNavigator navigator)
     {
-        Debug.Log("==============================");
         this.navigator = navigator;
     }
 
@@ -45,27 +44,50 @@ public class MainmenuPanel : UIWindow
         Unregister(removeAdsButton, OnRemoveAdsClicked);
     }
 
-    // -------------------------------------------------------------------------
-
     private void OnPlayClicked()
     {
-        Debug.Log("MainmenuPanel.OnPlayClicked");
         navigator?.GoToGameplay();
     }
 
     private void OnProfileClicked()
     {
-        UIManager?.Open<ProfilePopup>();
+        if (UIManager != null)
+        {
+
+            Debug.Log("OnProfileClicked");
+            UIManager.Open<ProfilePopup>();
+        } else
+        {
+            Debug.Log("UIManager is null");
+        }
     }
 
     private void OnSettingClicked()
     {
-        UIManager?.Open<SettingPopup>();
+        if (UIManager != null)
+        {
+
+            Debug.Log("OnSettingClicked");
+            UIManager.Open<SettingPopup>();
+        }
+        else
+        {
+            Debug.Log("UIManager is null");
+        }
     }
 
     private void OnRemoveAdsClicked()
     {
-        UIManager?.Open<RemoveAdsPopup>();
+        if (UIManager != null)
+        {
+
+            Debug.Log("OnRemoveAdsClicked");
+            UIManager.Open<RemoveAdsPopup>();
+        }
+        else
+        {
+            Debug.Log("UIManager is null");
+        }
     }
 
     // -------------------------------------------------------------------------

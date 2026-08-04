@@ -4,6 +4,9 @@ using UnityEngine;
 /// <summary>
 /// Đếm ngược thời gian gameplay.
 /// Gắn vào một GameObject trong GameplayScene.
+/// Fire Event OnTick mỗi FixedUpdate để báo time còn lại
+/// Fire Event OnTimeUp 1 lần khi hết giờ
+/// Có các hàm StartTimer(), StopTimer(), ResetTimer().
 /// </summary>
 public class GameTimer : MonoBehaviour
 {
@@ -12,11 +15,9 @@ public class GameTimer : MonoBehaviour
     private float remaining;
     private bool running;
 
-    /// <summary>Fired mỗi frame khi timer đang chạy. Truyền ra số giây còn lại.</summary>
-    public event Action<float> OnTick;
+    public event Action<float> OnTick; // Fired mỗi frame khi timer đang chạy. Truyền ra số giây còn lại.
 
-    /// <summary>Fired một lần khi hết giờ.</summary>
-    public event Action OnTimeUp;
+    public event Action OnTimeUp; // Fired một lần khi hết giờ.
 
     public float Remaining => remaining;
     public bool IsRunning => running;
@@ -38,7 +39,7 @@ public class GameTimer : MonoBehaviour
         running = false;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (!running) return;
 

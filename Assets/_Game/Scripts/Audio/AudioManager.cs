@@ -12,7 +12,7 @@ public class AudioClipEntry
     public AudioClip clip;
 }
 
-[CreateAssetMenu(fileName = "AudioClipDatabase", menuName = "HoleXGame/Audio Clip Database")]
+[CreateAssetMenu(fileName = "AudioClipDatabase", menuName = "Database/Audio Clip Database")]
 public class AudioClipDatabase : ScriptableObject
 {
     [SerializeField] private AudioClipEntry[] clips;

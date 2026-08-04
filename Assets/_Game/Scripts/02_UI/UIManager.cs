@@ -30,10 +30,6 @@ public enum WindowMode
     Popup,
 }
 
-// -----------------------------------------------------------------------------
-// UIManager
-// -----------------------------------------------------------------------------
-
 public class UIManager : MonoBehaviour
 {
     [Header("Loading Overlay")]
@@ -60,10 +56,6 @@ public class UIManager : MonoBehaviour
     {
         this.audioManager = audioManager;
     }
-
-    // -------------------------------------------------------------------------
-    // Khoi tao
-    // -------------------------------------------------------------------------
 
     public void Initialize()
     {
@@ -295,7 +287,7 @@ public abstract class UIWindow : MonoBehaviour
     /// Khai bao mode nay tren moi subclass de UIManager biet cach xu ly.
     /// Override bang cach override property nay, hoac de SerializeField.
     /// </summary>
-    [SerializeField] private WindowMode mode = WindowMode.Screen;
+    [SerializeField] private WindowMode mode;
     public WindowMode Mode => mode;
 
     public bool IsOpen { get; private set; }

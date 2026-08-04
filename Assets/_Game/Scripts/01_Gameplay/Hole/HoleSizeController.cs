@@ -1,148 +1,103 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-using VContainer;
 
 /// <summary>
-/// Quản lý toàn bộ kích thước hole: scale, radius, grow, detect, swallow.
-/// Compose HoleDetector và SwallowHandler (cùng GameObject).
+/// Quản lý kích thước hole
+/// 
 /// Events:
-///   OnScoreAdded(int)  — mỗi khi nuốt 1 object
-///   OnGrown(float)     — mỗi khi hole lớn lên, truyền scale mới
+///   OnScoreAdded(int)   — mỗi khi nuốt 1 object và truyền vào số điểm (int)
+///   OnGrown(float)      — mỗi khi hole lớn lên, truyền scale mới
 /// </summary>
-[RequireComponent(typeof(HoleDetector))]
 [RequireComponent(typeof(SwallowHandler))]
 public class HoleSizeController : MonoBehaviour
 {
-    [Header("Visuals name (trong hierarchy)")]
-    [Tooltip("Tên GameObject chứa mesh và collider của hole. Mặc định = 'Visuals'.")]
-    [SerializeField] private string visualsName = "Visuals";
-
-    // ── Public state ──────────────────────────────────────────────────────────
+    [SerializeField] private Transform visuals;
 
     public float Scale  { get; private set; }
     public float Radius { get; private set; }
 
-    public event Action<int>   OnScoreAdded;
-    public event Action<float> OnGrown;
+    // Events
+    public event Action<int>   OnScoreAdded; // OnScoreAdded?.Invoke(score) khi ăn obstacle. score là obstacle.Definition.ScoreValue
+    public event Action<float> OnGrown; // OnGrown?.Invoke(Scale) khi Growing
 
-    private Transform        visuals;
-    private CapsuleCollider  detectionCapsule;
-
-    #region Inject
-    private HoleDetector     holeDetector;
-    private SwallowHandler   swallowHandler;
-
-    [Inject]
-    private void Construct(HoleDetector holeDetector, SwallowHandler swallowHandler)
-    {
-        this.holeDetector = holeDetector;
-        this.swallowHandler = swallowHandler;
-    }
-    #endregion
-
-    private readonly List<Rigidbody> victims = new();
-
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // ── Private references (tự tìm) ───────────────────────────────────────────
+    private BoxCollider[] holeColliders;   // 8 BoxCollider giả lập ground quanh lỗ
+    private SwallowHandler swallowHandler;
 
     private void Awake()
     {
-        // Tự tìm visuals qua hierarchy
-        visuals          = transform.Find(visualsName);
-        detectionCapsule = GetComponentInChildren<CapsuleCollider>();
-
         if (visuals == null)
-            Debug.LogWarning($"[HoleSizeController] Không tìm thấy child '{visualsName}'. " +
-                             "Kiểm tra tên GameObject Visuals trong hierarchy.");
+            Debug.LogWarning("Visuals is null");
 
-        if (detectionCapsule == null)
-            Debug.LogWarning("[HoleSizeController] Không tìm thấy CapsuleCollider trong children. " +
-                             "Kiểm tra HoleFill có CapsuleCollider chưa.");
+        // Tự tìm tất cả BoxCollider trong children (8 collider ground)
+        holeColliders = GetComponentsInChildren<BoxCollider>();
+        if (holeColliders.Length == 0)
+            Debug.LogWarning("[HoleSizeController] Không tìm thấy BoxCollider nào trong children.");
 
-        // Inject shared victims list
-        holeDetector?.Initialize(victims, Radius);
-        swallowHandler.Initialize(victims, Scale);
+        swallowHandler = FindAnyObjectByType<SwallowHandler>();
+        swallowHandler.OnObjectSwallowed += ForwardScore;
 
-        // Forward events — dùng named method để unsubscribe đúng
-        if (swallowHandler != null)
-            swallowHandler.OnObjectSwallowed += ForwardScore;
+        // Khởi tạo scale ban đầu
+        Scale  = 1f;
+        Radius = 0.5f;
 
-        Scale = 1;
-        Radius = 1;
-        ApplyScale();
-        holeDetector.SetRadius(Radius);
-        swallowHandler.SetScale(Scale);
+        ApplyScale(Scale);
         OnGrown?.Invoke(Scale);
+    }
+
+    public void GrowHole() // Tăng scale hole lên 1 bậc. Gọi từ HoleController khi đủ điểm.
+    {
+        Scale *= 1.3f;
+        ApplyScale(Scale);
+        OnGrown?.Invoke(Scale);
+    }
+
+    public void ApplyScale(float Scale)
+    {
+        if (visuals != null)
+        {
+            Radius = 0.5f * Scale; // Do baseRadius = 0.5f
+            visuals.localScale = new Vector3(Scale, 1f, Scale);
+
+            ApplyRadius(Radius);
+            Debug.Log("ApplyScale: Radius = " + Radius);
+        } else
+        {
+            Debug.LogWarning("Visuals is null");
+        }
+    }
+
+    private void ApplyRadius(float radius) // Thiết lập các collider dịch ra tạo thành (O, radius)
+    {
+        if (holeColliders == null) return;
+        const float colliderRadius = 100f;
+
+        foreach (BoxCollider col in holeColliders)
+        {
+            if (col == null) continue;
+            // Kích thước collider
+            col.size = new Vector3(2 * colliderRadius, 0f, 2 * colliderRadius);
+
+            // Hướng từ tâm ra collider
+            Vector3 direction = col.center.normalized;
+
+            // Đẩy collider ra xa tâm
+            col.center = direction * (colliderRadius + radius);
+        }
+    }
+
+    private void ForwardScore(Obstacle obstacle)
+    {
+        if (obstacle != null && obstacle.ObstacleDefinition != null)
+        {
+            int score = obstacle.ObstacleDefinition.ScoreValue;
+            OnScoreAdded?.Invoke(score);
+        }
     }
 
     private void OnDestroy()
     {
         if (swallowHandler != null)
             swallowHandler.OnObjectSwallowed -= ForwardScore;
-    }
-
-    // ── Public API ────────────────────────────────────────────────────────────
-
-    /// <summary>Tăng scale hole lên 1 bậc. Gọi từ HoleController khi đủ điểm.</summary>
-    public void GrowHole()
-    {
-        Scale = Scale * 1.3f;
-        Radius = Radius * 1.3f;
-        ApplyScale();
-        holeDetector.SetRadius(Radius);
-        swallowHandler.SetScale(Scale);
-        OnGrown?.Invoke(Scale);
-    }
-
-    // ── Trigger relay ─────────────────────────────────────────────────────────
-
-    private void OnTriggerEnter(Collider other)
-    {
-        swallowHandler?.HandleTriggerEnter(other);
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        swallowHandler?.HandleTriggerExit(other);
-    }
-
-    // ── Private ───────────────────────────────────────────────────────────────
-
-    //private void ApplyScale()
-    //{
-    //    if (visuals != null)
-    //    {
-    //        visuals.localScale    = new Vector3(Scale, Scale, Scale);
-    //        visuals.localPosition = new Vector3(0f, -Scale / 2f - 0.49f, 0f);
-    //    }
-
-    //    if (detectionCapsule != null)
-    //    {
-    //        detectionCapsule.center = new Vector3(0f, -1f - Scale / 2f, 0f);
-    //        detectionCapsule.radius = Scale / 2f;
-    //    }
-    //}
-
-    private void ApplyScale()
-    {
-        if (visuals != null)
-        {
-            visuals.localScale = new Vector3(Scale, 1f, Scale);
-            //visuals.localPosition = new Vector3(0f, -1f, 0f);
-        }
-
-        if (detectionCapsule != null)
-        {
-            //detectionCapsule.center = new Vector3(0f, -1f, 0f);
-            detectionCapsule.radius = Scale / 2f;
-        }
-    }
-
-    private void ForwardScore(int pts) => OnScoreAdded?.Invoke(pts);
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, Radius);
     }
 }

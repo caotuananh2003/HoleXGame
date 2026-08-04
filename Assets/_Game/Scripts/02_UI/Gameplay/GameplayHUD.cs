@@ -9,44 +9,47 @@ using UnityEngine;
 /// </summary>
 public class GameplayHUD : UIWindow
 {
-    [Header("References")]
-    [SerializeField] private HoleSizeController sizeController;
-    [SerializeField] private HoleController     holeController;
-    [SerializeField] private GameTimer          gameTimer;
+
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI timerText;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
-
+    private HoleSizeController holeSizeController;
+    private HoleController holeController;
+    private GameTimer gameTimer;
+    private void Awake()
+    {
+        holeSizeController = FindAnyObjectByType<HoleSizeController>();
+        holeController = FindAnyObjectByType<HoleController>();
+        gameTimer = FindAnyObjectByType<GameTimer>();
+    }
     private void Start()
     {
         if (gameTimer != null)
+        {
             gameTimer.OnTick += OnTick;
+        }
 
-        if (sizeController != null)
-            sizeController.OnScoreAdded += OnScoreAdded;
+        if (holeSizeController != null)
+        {
+            holeSizeController.OnScoreAdded += OnScoreAdded;
+        }
 
         UpdateScore(0);
     }
 
-    private void OnDestroy()
+    private void OnScoreAdded(int delta) // Khi holeSizeController fire OnScoreAdded (của chính nó) thì sẽ gọi hàm này
     {
-        if (gameTimer != null)
-            gameTimer.OnTick -= OnTick;
-
-        if (sizeController != null)
-            sizeController.OnScoreAdded -= OnScoreAdded;
-    }
-
-    // ── Event handlers ────────────────────────────────────────────────────────
-
-    private void OnScoreAdded(int delta)
-    {
-        // Lấy tổng điểm từ HoleController (source of truth)
+        // Lấy tổng điểm từ HoleController
         if (holeController != null)
             UpdateScore(holeController.Score);
+    }
+
+    private void UpdateScore(int score)
+    {
+        if (scoreText != null)
+            scoreText.text = score.ToString();
     }
 
     private void OnTick(float remaining)
@@ -66,9 +69,14 @@ public class GameplayHUD : UIWindow
 
     // ── Private ───────────────────────────────────────────────────────────────
 
-    private void UpdateScore(int score)
+
+
+    private void OnDestroy()
     {
-        if (scoreText != null)
-            scoreText.text = score.ToString();
+        if (gameTimer != null)
+            gameTimer.OnTick -= OnTick;
+
+        if (holeSizeController != null)
+            holeSizeController.OnScoreAdded -= OnScoreAdded;
     }
 }

@@ -1,78 +1,43 @@
-using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
 
 /// <summary>
-/// Quản lý vòng đời của level trong GameplayScene:
-///   Initialize → spawn objects → expose map info → cleanup khi restart.
-///
-/// Gắn vào một GameObject trong GameplayScene.
-/// Đăng ký vào GameplayLifetimeScope.
+/// Quản lý vòng đời của level trong GameplayScene.
+/// Load LevelDefinition từ LevelsDatabase và expose cho các system khác dùng.
+/// Objects đã được designer đặt sẵn trong Scene — không spawn runtime.
 /// </summary>
 public class LevelManager : MonoBehaviour
 {
     [Header("Level Config")]
-    [Tooltip("Danh sách LevelData theo thứ tự. Index = level number (0-based).")]
-    [SerializeField] private LevelData[] levels;
+    [SerializeField] private LevelsDatabase levelsDatabase;
 
     // ── Public state ──────────────────────────────────────────────────────────
 
-    /// <summary>Bounds XZ của map hiện tại.</summary>
-    public Bounds MapBounds { get; private set; }
-
-    /// <summary>Tổng số object đã spawn (dùng cho ObstacleCounter target).</summary>
-    public int TotalSpawnedCount => spawnedObjects.Count;
-
-    // ── Private ───────────────────────────────────────────────────────────────
-
-    private ObjectPoolService poolService;
-    private LevelLoader       loader;
-    private LevelSpawner      spawner;
-    private List<GameObject>  spawnedObjects = new();
-
-    // ── DI ────────────────────────────────────────────────────────────────────
-
-    [Inject]
-    private void Construct(ObjectPoolService poolService)
-    {
-        this.poolService = poolService;
-    }
-
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
-
-    private void Awake()
-    {
-        loader  = new LevelLoader(levels);
-        spawner = new LevelSpawner(poolService);
-    }
+    /// <summary>LevelDefinition của level đang chạy hiện tại.</summary>
+    public LevelDefinition CurrentLevelDefinition { get; private set; }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Load và spawn level theo index.
+    /// Load LevelDefinition theo index từ LevelsDatabase.
     /// Gọi từ GameplayController.Start() trước khi StartGameplay().
     /// </summary>
     public void LoadLevel(int levelIndex = 0)
     {
-        LevelData data = loader.Load(levelIndex);
-        if (data == null)
+        if (levelsDatabase == null)
         {
-            Debug.LogError($"[LevelManager] Cannot load level {levelIndex}.");
+            Debug.LogError("[LevelManager] LevelsDatabase chưa được gán trong Inspector!");
             return;
         }
 
-        MapBounds      = data.GetMapBounds();
-        spawnedObjects = spawner.Spawn(data);
+        CurrentLevelDefinition = levelsDatabase.GetLevel(levelIndex);
 
-        Debug.Log($"[LevelManager] Level {levelIndex} loaded. Spawned {spawnedObjects.Count} objects.");
-    }
+        if (CurrentLevelDefinition == null)
+        {
+            Debug.LogError($"[LevelManager] Không tìm thấy level index {levelIndex} trong LevelsDatabase.");
+            return;
+        }
 
-    /// <summary>
-    /// Trả tất cả spawned objects về pool (gọi khi restart hoặc gameover).
-    /// </summary>
-    public void Cleanup()
-    {
-        poolService?.ReturnAll();
-        spawnedObjects.Clear();
+        Debug.Log($"[LevelManager] Loaded: {CurrentLevelDefinition.LevelName}");
     }
 }

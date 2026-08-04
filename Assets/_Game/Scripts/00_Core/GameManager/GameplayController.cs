@@ -1,20 +1,14 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using VContainer;
 
 /// <summary>
 /// Điều phối flow của GameplayScene:
 ///   LoadLevel → StartGameplay → GameOver → Restart / MainMenu.
-/// Gắn vào một GameObject trong GameplayScene.
-/// Wire HoleController, GameTimer, HoleSizeController qua Inspector.
+/// Gắn vào một ChildGameObject của GameplayContext.
 /// </summary>
 public class GameplayController : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private HoleController     holeController;
-    [SerializeField] private HoleSizeController sizeController;
-    [SerializeField] private GameTimer          gameTimer;
 
     [Header("Scene Names")]
     [SerializeField] private string mainMenuScene = "MainMenuScene";
@@ -23,49 +17,56 @@ public class GameplayController : MonoBehaviour
     [Tooltip("Index level bắt đầu (0-based). Có thể override từ SaveManager sau này.")]
     [SerializeField] private int startLevelIndex = 0;
 
-    // ── Injected services ─────────────────────────────────────────────────────
-
-    private GameManager          gameManager;
-    private SaveManager          saveManager;
-    private UIManager            uiManager;
-    private SceneManagerService  sceneManagerService;
-    private LevelManager         levelManager;
+    #region Inject and auto ref
+    private GameManager                 gameManager;
+    private SaveManager                 saveManager;
+    private UIManager                   uiManager;
+    private SceneManagerService         sceneManagerService;
+    private LevelManager                levelManager;
+    private GameplayObjectiveManager    objectiveManager;
 
     [Inject]
-    private void Construct(GameManager gameManager, SaveManager saveManager, UIManager uiManager, SceneManagerService sceneManagerService, LevelManager levelManager)
+    private void Construct(
+        GameManager gameManager, 
+        SaveManager saveManager, 
+        UIManager uiManager, 
+        SceneManagerService sceneManagerService, 
+        LevelManager levelManager,
+        GameplayObjectiveManager objectiveManager)
     {
         this.gameManager         = gameManager;
         this.saveManager         = saveManager;
         this.uiManager           = uiManager;
         this.sceneManagerService = sceneManagerService;
         this.levelManager        = levelManager;
+        this.objectiveManager    = objectiveManager;
     }
+
+    private HoleController holeController;
+    private SwallowHandler swallowHandler;
+    private GameTimer gameTimer; // Event: OnTimeUp
+
+    private void Awake()
+    {
+        holeController = FindAnyObjectByType<HoleController>();
+        swallowHandler = FindAnyObjectByType<SwallowHandler>();
+        gameTimer = FindAnyObjectByType<GameTimer>();
+    }
+    #endregion
 
     private void Start()
     {
         // Load thong tin tu Level trong database
         levelManager.LoadLevel(startLevelIndex);
 
+        // Initialize objective system
+        objectiveManager.InitializeLevel(levelManager.CurrentLevelDefinition);
+        objectiveManager.OnAllObjectivesCompleted += OnLevelWin;
+
         // Subscribe events het gio
-        gameTimer.OnTimeUp += TriggerGameOver;
+        gameTimer.OnTimeUp += OnGameOver;
 
-        //if (sizeController != null)
-        //{
-        //    sizeController.OnScoreAdded += OnObjectSwallowed;
-        //} else
-        //{
-        //    Debug.Log("sizeController is null");
-        //}
         StartGameplay();
-    }
-
-    private void OnDestroy()
-    {
-        if (gameTimer != null)
-            gameTimer.OnTimeUp -= TriggerGameOver;
-
-        if (sizeController != null)
-            sizeController.OnScoreAdded -= OnObjectSwallowed;
     }
 
     private void StartGameplay()
@@ -74,54 +75,66 @@ public class GameplayController : MonoBehaviour
         holeController.SetInputEnabled(true);
         gameTimer.StartTimer();
 
-        // Persistent windows đã tự active — chỉ cần lấy reference để setup
-        GameplayPanel panel = uiManager.GetWindow<GameplayPanel>();
-        panel?.Setup(levelManager.TotalSpawnedCount);
+        // Setup UI với objectives
+        GameplayPanel gameplayPanel = uiManager.GetWindow<GameplayPanel>();
+        if (gameplayPanel != null && levelManager.CurrentLevelDefinition != null)
+        {
+            gameplayPanel.SetupObjectives(levelManager.CurrentLevelDefinition.LevelObjectives);
+        }
     }
 
-    private void OnObjectSwallowed(int delta)
+    private void OnLevelWin()
     {
-        GameplayPanel panel = uiManager.GetWindow<GameplayPanel>();
-        panel?.OnObjectSwallowed();
+        Debug.Log("[GameplayController] Level Win!");
+        gameManager.ChangeState(GameState.Result);
+        holeController.SetInputEnabled(false);
+        gameTimer.StopTimer();
+
+        int finalScore = holeController.Score;
+
+        // TODO: Hiển thị Win Panel thay vì GameOver Panel
+
+        GameWinPanel panel = uiManager.Open<GameWinPanel>();
+        //GameOverPanel panel = uiManager.Open<GameOverPanel>();
+        //panel?.Setup(finalScore, saveManager?.Data?.highscore ?? 0);
     }
 
-    private void TriggerGameOver()
+    // Disable Input, StopTimer, Setup GameOverPanel
+    private void OnGameOver()
     {
+        Debug.Log("GameOver");
         gameManager.ChangeState(GameState.Result);
 
         holeController.SetInputEnabled(false);
         gameTimer.StopTimer();
-        levelManager.Cleanup();
 
         int finalScore = holeController.Score;
-        //SaveHighscore(finalScore).Forget();
 
         GameOverPanel panel = uiManager.Open<GameOverPanel>();
         panel?.Setup(finalScore, saveManager?.Data?.highscore ?? 0);
     }
 
-    public async UniTaskVoid RestartAsync()
-    {
-        gameManager.ChangeState(GameState.Loading);
-        await sceneManagerService.LoadScene("Gameplay");
-    }
-
-    public async UniTaskVoid GoToMainMenuAsync()
-    {
-        gameManager.ChangeState(GameState.Loading);
-        await sceneManagerService.LoadScene(mainMenuScene);
-    }
-
-    // ── Private helpers ───────────────────────────────────────────────────────
-
-    //private async UniTask SaveHighscore(int score)
+    //public async UniTaskVoid RestartAsync()
     //{
-    //    if (saveManager?.Data == null) return;
-
-    //    if (score > saveManager.Data.highscore)
-    //    {
-    //        saveManager.Data.highscore = score;
-    //        await saveManager.Save();
-    //    }
+    //    gameManager.ChangeState(GameState.Loading);
+    //    await sceneManagerService.LoadScene("Gameplay");
     //}
+
+    //public async UniTaskVoid GoToMainMenuAsync()
+    //{
+    //    gameManager.ChangeState(GameState.Loading);
+    //    await sceneManagerService.LoadScene(mainMenuScene);
+    //}
+
+    private void OnDestroy()
+    {
+        if (gameTimer != null)
+            gameTimer.OnTimeUp -= OnGameOver;
+
+        if (objectiveManager != null)
+        {
+            objectiveManager.OnAllObjectivesCompleted -= OnLevelWin;
+            objectiveManager.Cleanup();
+        }
+    }
 }

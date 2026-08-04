@@ -1,55 +1,52 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 /// <summary>
 /// Dynamic joystick dùng Unity New Input System.
 /// - Chạm màn hình: joystick UI xuất hiện ngay tại điểm chạm.
-/// - Kéo: tính direction + magnitude, giới hạn trong maxRadius pixel.
+/// - Kéo: tính direction + magnitude, giới hạn trong maxRadius (canvas units).
 /// - Nhả: joystick ẩn, magnitude = 0.
 ///
-/// Gắn vào một GameObject trong GameplayScene (cùng Canvas với joystick UI).
-/// Wire joystickRoot, knob qua Inspector.
+/// Gắn lên JoystickCanvas (cùng GameObject với Canvas component).
+/// JoystickRoot là direct child của JoystickCanvas.
+/// Knob là direct child của JoystickRoot.
 /// </summary>
-public class TouchJoystickInput : MonoBehaviour, IInputProvider
+public class TouchJoystickInput : MonoBehaviour
 {
     [Header("Joystick UI")]
-    [Tooltip("Root RectTransform của toàn bộ joystick (background + knob). Sẽ ẩn/hiện.")]
     [SerializeField] private RectTransform joystickRoot;
-
-    [Tooltip("Knob (nút tròn nhỏ bên trong). Di chuyển theo ngón tay.")]
     [SerializeField] private RectTransform knob;
 
-    [Tooltip("Bán kính tối đa (pixel) mà knob có thể rời khỏi tâm.")]
+    [Tooltip("Bán kính tối đa (canvas units) knob có thể rời khỏi tâm.")]
     [SerializeField] private float maxRadius = 80f;
 
-    // ── IInputProvider ────────────────────────────────────────────────────────
-
-    public Vector2 Direction          { get; private set; }
-    public float   Magnitude          { get; private set; }
-    public bool    IsActive           { get; private set; }
+    public Vector2 Direction            { get; private set; }
+    public float   Magnitude            { get; private set; }
+    public bool    IsActive             { get; private set; }
     public bool    WasReleasedThisFrame { get; private set; }
 
-    // ── Private ───────────────────────────────────────────────────────────────
-
-    private Vector2 anchorScreenPos;   // vị trí tâm joystick (screen coords)
-    private Camera  uiCamera;          // null nếu Canvas là Screen Space Overlay
-    private RectTransform canvasRect;  // root canvas RectTransform để tính toán vị trí chính xác
-
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // anchorLocalPos: vị trí chạm ban đầu trong local space của Canvas
+    private Vector2       anchorLocalPos;
+    private Camera        uiCamera;
+    private RectTransform canvasRect;
 
     private void Awake()
     {
-        // Tìm root canvas
-        Canvas canvas = GetComponentInParent<Canvas>();
+        // Script gắn trên JoystickCanvas — lấy Canvas của chính object này
+        Canvas canvas = GetComponent<Canvas>();
         if (canvas != null)
         {
-            // Lấy root canvas (tránh nested canvas)
-            Canvas rootCanvas = canvas.rootCanvas;
-            canvasRect = rootCanvas.GetComponent<RectTransform>();
+            Canvas root = canvas.rootCanvas;
+            canvasRect  = root.GetComponent<RectTransform>();
 
-            if (rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
-                uiCamera = rootCanvas.worldCamera;
+            // Chỉ cần uiCamera nếu KHÔNG phải Screen Space Overlay
+            if (root.renderMode != RenderMode.ScreenSpaceOverlay)
+                uiCamera = root.worldCamera;
+        }
+        else
+        {
+            Debug.LogWarning("[TouchJoystickInput] Không tìm thấy Canvas trên GameObject này. " +
+                             "Script phải gắn lên cùng GameObject với Canvas component.");
         }
 
         HideJoystick();
@@ -59,7 +56,6 @@ public class TouchJoystickInput : MonoBehaviour, IInputProvider
     {
         WasReleasedThisFrame = false;
 
-        // Ưu tiên touch trước, fallback về mouse (editor/PC)
         Touchscreen touch = Touchscreen.current;
         Mouse        mouse = Mouse.current;
 
@@ -71,68 +67,47 @@ public class TouchJoystickInput : MonoBehaviour, IInputProvider
             ResetInput();
     }
 
-    // ── Input handlers ────────────────────────────────────────────────────────
-
     private void HandleTouch(Touchscreen touch)
     {
         if (touch.primaryTouch.press.wasPressedThisFrame)
-        {
             BeginDrag(touch.primaryTouch.position.ReadValue());
-        }
         else if (touch.primaryTouch.press.isPressed)
-        {
             UpdateDrag(touch.primaryTouch.position.ReadValue());
-        }
 
         if (touch.primaryTouch.press.wasReleasedThisFrame)
-        {
             EndDrag();
-        }
     }
 
     private void HandleMouse(Mouse mouse)
     {
         if (mouse.leftButton.wasPressedThisFrame)
-        {
             BeginDrag(mouse.position.ReadValue());
-        }
         else if (mouse.leftButton.isPressed)
-        {
             UpdateDrag(mouse.position.ReadValue());
-        }
         else if (mouse.leftButton.wasReleasedThisFrame)
-        {
             EndDrag();
-        }
         else if (!mouse.leftButton.isPressed)
-        {
             ResetInput();
-        }
     }
-
-    // ── Drag logic ────────────────────────────────────────────────────────────
 
     private void BeginDrag(Vector2 screenPos)
     {
-        anchorScreenPos = screenPos;
-        IsActive        = true;
+        IsActive = true;
+
+        if (canvasRect == null) return;
+
+        // Convert screen → local space của JoystickCanvas (parent của joystickRoot)
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            canvasRect, screenPos, uiCamera, out Vector2 localPos);
+
+        anchorLocalPos = localPos;
 
         if (joystickRoot != null)
         {
             joystickRoot.gameObject.SetActive(true);
 
-            // Dùng canvasRect (root canvas) để convert screen → local chính xác
-            RectTransform parent = canvasRect != null
-                ? canvasRect
-                : joystickRoot.parent as RectTransform;
-
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                parent,
-                screenPos,
-                uiCamera,
-                out Vector2 localPoint);
-
-            joystickRoot.anchoredPosition = localPoint;
+            // Gán localPosition thay vì anchoredPosition để tránh lệch do anchor offset
+            joystickRoot.localPosition = new Vector3(localPos.x, localPos.y, 0f);
         }
 
         if (knob != null)
@@ -144,17 +119,15 @@ public class TouchJoystickInput : MonoBehaviour, IInputProvider
 
     private void UpdateDrag(Vector2 screenPos)
     {
-        Vector2 delta = screenPos - anchorScreenPos;
+        if (canvasRect == null) return;
 
-        // Convert screen pixel delta → canvas local units (xử lý Canvas Scaler)
-        if (canvasRect != null)
-        {
-            float scaleFactor = canvasRect.localScale.x;
-            if (scaleFactor > 0f)
-                delta /= scaleFactor;
-        }
+        // Convert vị trí ngón tay hiện tại sang local space của Canvas
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            canvasRect, screenPos, uiCamera, out Vector2 currentLocalPos);
 
-        float dist = delta.magnitude;
+        // Tính delta hoàn toàn trong local space — đúng với mọi Canvas Scaler
+        Vector2 delta = currentLocalPos - anchorLocalPos;
+        float   dist  = delta.magnitude;
 
         // Clamp knob trong maxRadius
         Vector2 clampedDelta = dist > maxRadius
@@ -166,7 +139,6 @@ public class TouchJoystickInput : MonoBehaviour, IInputProvider
 
         Direction = dist > 0.01f ? delta.normalized : Vector2.zero;
         Magnitude = Mathf.Clamp01(dist / maxRadius);
-        IsActive  = true;
     }
 
     private void EndDrag()

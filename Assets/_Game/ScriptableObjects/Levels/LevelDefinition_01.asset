@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f984e3a4c81c2b24e97d1ecdb9c581b2, type: 3}
+  m_Name: LevelDefinition_01
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Gameplay.LevelDefinition
+  levelIndex: 0
+  levelName: Level1
+  timeLimit: 150
+  levelObjectives:
+  - obstacleDefinition: {fileID: 11400000, guid: 64ce99b03785bc14c8a9d6f2f5b88246, type: 2}
+    requiredCount: 1
+  - obstacleDefinition: {fileID: 11400000, guid: e9993dce22b69034088447cd17bb678c, type: 2}
+    requiredCount: 2
+  - obstacleDefinition: {fileID: 11400000, guid: 2ad45e6be6078ab4582c30d15ccfa6d2, type: 2}
+    requiredCount: 4

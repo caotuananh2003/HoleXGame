@@ -1,78 +1,48 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 /// <summary>
-/// Apply gravity physics lên victims, xử lý object rơi vào/qua lỗ, fire score event.
-/// Dùng HoleSizeController.Scale để tính lực kéo.
+/// Fired Event OnObjectSwallowed khi một object rơi vào lỗ.
+/// Truyền Obstacle component để các subscriber biết loại obstacle nào bị nuốt.
+/// 
+/// OnTriggerEnter: object rơi vào collider → fire event với Obstacle data
+/// OnTriggerExit:  object rơi xuyên qua hoàn toàn → disable
+///
+/// Trigger collider cần gắn trên cùng GameObject với script này (Player root).
 /// </summary>
-[RequireComponent(typeof(HoleSizeController))]
 public class SwallowHandler : MonoBehaviour
 {
-    private const int SwallowingLayer = 10;
+    private const int Swallowable = 9;
 
-    [SerializeField] private float swallowGravity = 10f;
+    /// <summary>
+    /// Event fire khi obstacle bị nuốt. Truyền Obstacle component.
+    /// Subscribers sẽ lấy ObstacleDefinition từ đây để biết loại, điểm số, icon...
+    /// </summary>
+    public event Action<Obstacle> OnObjectSwallowed;
 
-    public event Action<int> OnObjectSwallowed;
-
-    private List<Rigidbody>    victims;
-    private float scale = 1f;
-
-    public void SetScale(float newScale)
+    private void OnTriggerEnter(Collider other)
     {
-        scale = newScale;
-    }
-
-    // Gọi từ HoleSizeController.Awake() để khởi tạo victims list (Dùng chung, cùng trỏ tới 1 List<Rigidbody> trong bộ nhớ)
-    public void Initialize(List<Rigidbody> sharedVictims, float initialScale)
-    {
-        victims = sharedVictims;
-        scale = initialScale;
-    }
-
-    private void FixedUpdate()
-    {
-        if (victims == null)
-            return;
-
-        for (int i = victims.Count - 1; i >= 0; i--) // Chạy ngược lại để khi remove phần tử, không cần thao tác cập nhật lại i
+        if (other.gameObject.layer == Swallowable)
         {
-            if (victims[i] == null)
+            // Lấy Obstacle component từ object bị nuốt
+            Obstacle obstacle = other.GetComponent<Obstacle>();
+            
+            if (obstacle != null && obstacle.ObstacleDefinition != null)
             {
-                victims.RemoveAt(i);
-                continue;
+                Debug.Log($"Swallowing {other.gameObject.name} (Type: {obstacle.ObstacleDefinition.ObstacleID})");
+                OnObjectSwallowed?.Invoke(obstacle);
             }
-
-            Debug.Log($"Removing {victims[i].gameObject.name}");
-            victims[i].gameObject.SetActive(false);
-            victims.RemoveAt(i);
-
-            //victims[i].AddForce(
-            //    Vector3.down * scale * swallowGravity * Time.fixedDeltaTime,
-            //    ForceMode.VelocityChange);
-
-            //// Ví dụ: nếu object đã đi qua lỗ thì disable
-            //if (victims[i].position.y < -5f)
-            //{
-            //    victims[i].gameObject.SetActive(false);
-            //    victims.RemoveAt(i);
-            //}
+            else
+            {
+                Debug.LogWarning($"[SwallowHandler] Object {other.gameObject.name} trên layer Swallowable nhưng không có Obstacle component hoặc Definition!", other);
+            }
         }
     }
 
-    public void HandleTriggerEnter(Collider other)
-    {
-        if (other.gameObject.layer == SwallowingLayer)
-            OnObjectSwallowed?.Invoke(1);
-    }
-
-    public void HandleTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other)
     {
         if (other.transform.position.y >= 0f) return;
 
         other.gameObject.SetActive(false);
-        Rigidbody rb = other.GetComponent<Rigidbody>();
-        if (rb != null) victims.Remove(rb);
     }
 }
