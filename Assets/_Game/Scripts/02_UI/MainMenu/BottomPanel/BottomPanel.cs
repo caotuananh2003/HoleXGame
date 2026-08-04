@@ -58,4 +58,22 @@ public class BottomPanel : UIWindow
         currentTabIndex = index;
         contentNavigator.NavigateTo(index);
     }
+
+    /// <summary>
+    /// Chuyển sang panel có type T, đồng thời cập nhật tab highlight.
+    /// Gọi từ bên ngoài (ví dụ: MainmenuPanel.OnCurrencyClicked) khi cần
+    /// điều hướng mà không đi qua nút tab.
+    /// </summary>
+    public void NavigateToPanel<T>() where T : UIWindow
+    {
+        int index = contentNavigator.GetIndexOf<T>();
+
+        if (index < 0)
+        {
+            Debug.LogWarning($"[BottomPanel] NavigateToPanel<{typeof(T).Name}>: panel không tìm thấy trong ContentNavigator.");
+            return;
+        }
+
+        SelectTab(index);
+    }
 }

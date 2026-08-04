@@ -41,6 +41,21 @@ public class ContentNavigator : MonoBehaviour
     }
 
     /// <summary>
+    /// Trả về index của panel có type T trong danh sách panels.
+    /// Trả -1 nếu không tìm thấy.
+    /// </summary>
+    public int GetIndexOf<T>() where T : UIWindow
+    {
+        for (int i = 0; i < panels.Count; i++)
+        {
+            if (panels[i] is T)
+                return i;
+        }
+
+        return -1;
+    }
+
+    /// <summary>
     /// Gọi bởi BottomNavigationController sau khi nó đã sẵn sàng.
     /// </summary>
     public void Init()

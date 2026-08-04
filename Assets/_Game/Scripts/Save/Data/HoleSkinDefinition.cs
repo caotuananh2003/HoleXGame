@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Hole Definition", menuName = "Definition/Hole Definition")]
+[CreateAssetMenu(fileName = "HoleSkinDefinition", menuName = "Definition/Hole Skin Definition")]
 public class HoleSkinDefinition : ScriptableObject
 {
     [SerializeField] private string id;

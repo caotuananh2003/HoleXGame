@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21559784967561e41a0ee5519b5b66ca, type: 3}
+  m_Name: MapTheme Definition_2
+  m_EditorClassIdentifier: Assembly-CSharp::MapThemeDefinition
+  id: 2
+  displayName: Cheese
+  enableIcon: {fileID: 21300000, guid: f26977d7ce4044041932b67b9e0c5df0, type: 2}
+  disableIcon: {fileID: 21300000, guid: 7c1d6fd37a38f84428ed6e9f00363575, type: 2}
+  price: 0
+  unlockedByDefault: 1

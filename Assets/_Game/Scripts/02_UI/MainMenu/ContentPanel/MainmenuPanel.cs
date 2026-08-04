@@ -1,3 +1,4 @@
+using DG.Tweening.Core.Easing;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -15,17 +16,28 @@ public class MainmenuPanel : UIWindow
 {
     [Header("Navigation")]
     [SerializeField] private Button playButton;
+    [SerializeField] private BottomPanel bottomPanel;
     private MainmenuNavigator navigator;
 
     [Header("Popup Buttons")]
     [SerializeField] private Button profileButton;
     [SerializeField] private Button settingButton;
     [SerializeField] private Button removeAdsButton;
+    [SerializeField] private ProfilePreview profilePreview;
 
+    [Header("HUD Buttons")]
+    [SerializeField] private Button currencyButton;
+    [SerializeField] private Button livesButton;
+
+    [Header("Data")]
+    [SerializeField] private PlayerProfile playerProfile;
+
+    private SaveManager saveManager;
     [Inject]
-    private void Construct(MainmenuNavigator navigator)
+    private void Construct(MainmenuNavigator navigator, SaveManager saveManager)
     {
         this.navigator = navigator;
+        this.saveManager = saveManager;
     }
 
     private void Start()
@@ -34,15 +46,38 @@ public class MainmenuPanel : UIWindow
         Register(profileButton, OnProfileClicked);
         Register(settingButton, OnSettingClicked);
         Register(removeAdsButton, OnRemoveAdsClicked);
+        Register(currencyButton, OnCurrencyClicked);
+        Register(livesButton, OnLivesClicked);
+
+        if (playerProfile != null)
+        {
+            profilePreview?.Init(
+                playerProfile.AvatarDatabase,
+                playerProfile.FrameDatabase,
+                playerProfile.BadgeDatabase);
+        }
+        else
+        {
+            Debug.LogWarning("[MainmenuPanel] playerProfile is not assigned. ProfilePreview will not display correctly.");
+        }
+
+        RefreshPreview();
+
+        if (bottomPanel == null)
+            Debug.LogWarning("[MainmenuPanel] bottomPanel is not assigned in Inspector.");
     }
 
-    private void OnDestroy()
+    public void RefreshPreview() // Refresh preview theo dữ liệu hiện tại trong SaveManager.
     {
-        Unregister(playButton, OnPlayClicked);
-        Unregister(profileButton, OnProfileClicked);
-        Unregister(settingButton, OnSettingClicked);
-        Unregister(removeAdsButton, OnRemoveAdsClicked);
+        if (saveManager?.Data == null)
+        {
+            Debug.LogWarning("[ProfilePopup] SaveManager.Data is null. Cannot refresh preview.");
+            return;
+        }
+
+        profilePreview?.Refresh(saveManager.Data.profile);
     }
+
 
     private void OnPlayClicked()
     {
@@ -80,7 +115,6 @@ public class MainmenuPanel : UIWindow
     {
         if (UIManager != null)
         {
-
             Debug.Log("OnRemoveAdsClicked");
             UIManager.Open<RemoveAdsPopup>();
         }
@@ -88,6 +122,27 @@ public class MainmenuPanel : UIWindow
         {
             Debug.Log("UIManager is null");
         }
+    }
+
+    private void OnCurrencyClicked()
+    {
+        bottomPanel?.NavigateToPanel<ShopPanel>();
+    }
+
+    private void OnLivesClicked()
+    {
+        UIManager?.Open<LifePopup>();
+    }
+
+
+    private void OnDestroy()
+    {
+        Unregister(playButton, OnPlayClicked);
+        Unregister(profileButton, OnProfileClicked);
+        Unregister(settingButton, OnSettingClicked);
+        Unregister(removeAdsButton, OnRemoveAdsClicked);
+        Unregister(currencyButton, OnCurrencyClicked);
+        Unregister(livesButton, OnLivesClicked);
     }
 
     // -------------------------------------------------------------------------

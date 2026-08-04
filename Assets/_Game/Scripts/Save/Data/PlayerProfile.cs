@@ -14,6 +14,7 @@ public class PlayerProfile : ScriptableObject
     [Header("Gameplay Definitions")]
     public HoleSkinDatabase HoleSkinDatabase;
     public MapThemeDatabase MapThemeDatabase;
+    public BundleDatabase BundleDatabase;
     public List<ItemDefinition> ItemDefinitionList; // Lam phan nay sau
 
     [Header("Profile Definitions")]

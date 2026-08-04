@@ -25,6 +25,13 @@ public class PlayerData
     /// JsonUtility serialize nested class đúng khi class đó có [Serializable].
     /// </summary>
     public ProfileData profile = new ProfileData();
+
+    // ── Shop — item đang trang bị ─────────────────────────────────────────────
+    /// <summary>ID của HoleSkin đang trang bị. Rỗng = dùng default.</summary>
+    public string equippedHoleSkinId = "";
+
+    /// <summary>ID của MapTheme đang trang bị. Rỗng = dùng default.</summary>
+    public string equippedMapThemeId = "";
 }
 
 /// <summary>

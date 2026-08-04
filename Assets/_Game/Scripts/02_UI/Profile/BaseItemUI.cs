@@ -16,32 +16,18 @@ using UnityEngine.UI;
 /// </summary>
 public abstract class BaseItemUI<TDefinition> : MonoBehaviour
 {
-    // -------------------------------------------------------------------------
-    // Inspector references
-    // -------------------------------------------------------------------------
-
     [Header("UI References")]
     [SerializeField] private Image iconImage;
     [SerializeField] private GameObject selectedOverlay;
     [SerializeField] private GameObject lockOverlay;
     [SerializeField] private Button button;
 
-    // -------------------------------------------------------------------------
-    // State
-    // -------------------------------------------------------------------------
-
     private TDefinition definition;
     private bool isUnlocked;
 
-    /// <summary>ID của item này — dùng để so sánh selected state.</summary>
-    public string ItemId { get; private set; }
+    public string ItemId { get; private set; } //ID của item này — dùng để so sánh selected state.
 
-    /// <summary>Callback khi người chơi click item đã unlock. Tham số là ItemId.</summary>
-    public event Action<string> OnClicked;
-
-    // =========================================================================
-    // Unity lifecycle
-    // =========================================================================
+    public event Action<string> OnClicked; // Callback khi người chơi click item đã unlock. Tham số là ItemId.
 
     private void Awake()
     {
@@ -97,18 +83,14 @@ public abstract class BaseItemUI<TDefinition> : MonoBehaviour
     }
 
     // =========================================================================
-    // Abstracts — subclass implement để trả về id / sprite phù hợp
+    // Abstracts — subclass bắt buộc phải override để trả về id / sprite phù hợp
     // =========================================================================
 
-    /// <summary>Trả về id string của definition.</summary>
+    // Trả về id string của definition.
     protected abstract string GetId(TDefinition def);
 
-    /// <summary>Trả về sprite hiển thị của definition.</summary>
+    // Trả về sprite hiển thị của definition.
     protected abstract Sprite GetSprite(TDefinition def);
-
-    // =========================================================================
-    // Internal
-    // =========================================================================
 
     private void HandleClick()
     {

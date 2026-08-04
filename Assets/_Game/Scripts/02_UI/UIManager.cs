@@ -171,6 +171,29 @@ public class UIManager : MonoBehaviour
         target.Open();
     }
 
+    /// <summary>
+    /// Đăng ký một Screen đang active sẵn vào screenStack mà không Open/Close gì.
+    /// Dùng cho screen mặc định đã được bật sẵn trong hierarchy khi scene load
+    /// (ví dụ: MainmenuPanel). Nếu không gọi hàm này, screenStack sẽ rỗng và
+    /// OpenScreen sẽ không biết screen nào cần đóng khi chuyển sang screen mới.
+    /// </summary>
+    public void RegisterInitialScreen<T>() where T : UIWindow
+    {
+        Type windowType = typeof(T);
+
+        if (!windowsByType.ContainsKey(windowType))
+        {
+            Debug.LogWarning($"[UIManager] RegisterInitialScreen<{windowType.Name}>: window chưa được cache. Gọi sau UISceneRoot.Start().");
+            return;
+        }
+
+        if (screenStack.Count > 0 && screenStack.Peek() == windowType)
+            return;
+
+        screenStack.Push(windowType);
+        Debug.Log($"[UIManager] RegisterInitialScreen: {windowType.Name} đã được push vào screenStack.");
+    }
+
     // Khong dong screen hien tai, mo popup de len.
     private void OpenPopup(UIWindow target)
     {

@@ -30,5 +30,9 @@ public class MainMenuLifetimeScope : LifetimeScope
         builder.RegisterComponentInHierarchy<SettingPopup>();
         builder.RegisterComponentInHierarchy<ProfilePopup>();
         builder.RegisterComponentInHierarchy<EditProfilePopup>();
+
+        // ── Screens có [Inject] ───────────────────────────────────────────────
+        // ShopPanel: inject SaveManager (đọc equippedHoleSkinId / equippedMapThemeId)
+        builder.RegisterComponentInHierarchy<ShopPanel>();
     }
 }
