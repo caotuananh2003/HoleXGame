@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8347812007993249266}
   - component: {fileID: 4581754642313482913}
+  - component: {fileID: 4034658384863177469}
   m_Layer: 9
   m_Name: 1213_shortcake
   m_TagString: Untagged
@@ -60,6 +61,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &4034658384863177469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52471134090135231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c94df9f58ba85434d8c16056107e8b31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Obstacle
+  obstacleDefinition: {fileID: 0}
 --- !u!1 &6296140835832604600
 GameObject:
   m_ObjectHideFlags: 0
@@ -88,9 +102,9 @@ Transform:
   m_GameObject: {fileID: 6296140835832604600}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.664914, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 8347812007993249266}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

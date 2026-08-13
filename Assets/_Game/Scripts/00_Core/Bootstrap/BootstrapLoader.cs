@@ -22,7 +22,6 @@ public class BootstrapLoader : MonoBehaviour
         GameManager gameManager,
         SceneManagerService sceneManagerService)
     {
-        Debug.Log("BootstrapLoader constructing");
         this.saveManager = saveManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -32,10 +31,6 @@ public class BootstrapLoader : MonoBehaviour
 
     private async void Start()
     {
-        if (gameManager == null)
-        {
-            Debug.Log("gameManager null");
-        }
         gameManager.ChangeState(GameState.Boot);
 
         await saveManager.Initialize();

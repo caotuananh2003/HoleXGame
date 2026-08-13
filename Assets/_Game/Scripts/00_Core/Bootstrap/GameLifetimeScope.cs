@@ -30,6 +30,13 @@ public class GameLifetimeScope : LifetimeScope
         builder.RegisterComponent(GetRequiredComponentInChildren<SceneManagerService>());
 
         builder.RegisterComponent(GetRequiredComponentInChildren<BootstrapLoader>());
+
+#if UNITY_EDITOR
+        // EditorCheatController chỉ cần trong Editor — inject SaveManager để reset save.
+        var cheat = GetComponentInParent<Transform>().root.GetComponentInChildren<EditorCheatController>(true);
+        if (cheat != null)
+            builder.RegisterComponent(cheat);
+#endif
     }
 
     private T GetRequiredComponentInChildren<T>() where T : Component

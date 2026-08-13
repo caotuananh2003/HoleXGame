@@ -28,6 +28,17 @@ public class GameTimer : MonoBehaviour
         running = true;
     }
 
+    /// <summary>
+    /// Bắt đầu đếm ngược với duration tuỳ chỉnh.
+    /// Dùng khi muốn lấy timeLimit từ LevelDefinition thay vì giá trị Inspector.
+    /// </summary>
+    public void StartTimer(float duration)
+    {
+        totalTime = duration;
+        remaining = totalTime;
+        running = true;
+    }
+
     public void StopTimer()
     {
         running = false;
@@ -37,6 +48,16 @@ public class GameTimer : MonoBehaviour
     {
         remaining = totalTime;
         running = false;
+    }
+
+    /// <summary>
+    /// Cộng thêm giây vào thời gian còn lại và tiếp tục chạy.
+    /// Dùng khi người chơi hồi sinh bằng ads hoặc currency.
+    /// </summary>
+    public void AddTime(float seconds)
+    {
+        remaining += seconds;
+        running    = true;
     }
 
     private void FixedUpdate()

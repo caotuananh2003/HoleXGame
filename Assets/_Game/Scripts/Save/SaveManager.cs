@@ -19,6 +19,14 @@ public class PlayerData
     public int highscore;
     public int medals;
 
+    // ── Level Progress ────────────────────────────────────────────────────────
+    /// <summary>
+    /// Index level hiện tại của player (0-based).
+    /// Tăng lên 1 mỗi khi qua màn, dùng mod % để quay vòng.
+    /// Giá trị -1 = chưa từng chơi, GameplayController sẽ dùng startLevelIndex.
+    /// </summary>
+    public int currentLevelIndex = -1;
+
     // ── Profile ───────────────────────────────────────────────────────────────
     /// <summary>
     /// Dữ liệu profile người chơi: avatar, frame, badge được chọn.
@@ -32,6 +40,65 @@ public class PlayerData
 
     /// <summary>ID của MapTheme đang trang bị. Rỗng = dùng default.</summary>
     public string equippedMapThemeId = "";
+
+    // ── Shop — item đã mua/unlock ─────────────────────────────────────────────
+    /// <summary>Danh sách ID HoleSkin đã được mua (ngoài các item unlockedByDefault).</summary>
+    public System.Collections.Generic.List<string> unlockedHoleSkinIds = new();
+
+    /// <summary>Danh sách ID MapTheme đã được mua (ngoài các item unlockedByDefault).</summary>
+    public System.Collections.Generic.List<string> unlockedMapThemeIds = new();
+
+    // ── Economy ───────────────────────────────────────────────────────────────
+    /// <summary>Lượng currency hiện có. Mặc định 5000.</summary>
+    public int currency = 5000;
+
+    /// <summary>Lượng lives hiện có. Mặc định 10.</summary>
+    public int lives = 10;
+
+    // ── Items — Số lượng item hiện tại ────────────────────────────────────────
+    /// <summary>
+    /// Số lượng item hiện có của player (runtime data).
+    /// Key = itemId (string), Value = current quantity (int).
+    /// Không serialize dictionary trực tiếp — dùng helper list cho JsonUtility.
+    /// </summary>
+    [System.NonSerialized]
+    public System.Collections.Generic.Dictionary<string, int> itemQuantities = new();
+
+    // Helper cho JsonUtility serialize Dictionary
+    [System.Serializable]
+    public struct ItemQuantityEntry
+    {
+        public string itemId;
+        public int quantity;
+    }
+
+    public System.Collections.Generic.List<ItemQuantityEntry> itemQuantityList = new();
+
+    /// <summary>
+    /// Gọi trước khi serialize (trong SaveManager.Save()).
+    /// Convert Dictionary → List để JsonUtility serialize được.
+    /// </summary>
+    public void PrepareForSerialization()
+    {
+        itemQuantityList.Clear();
+        foreach (var kvp in itemQuantities)
+        {
+            itemQuantityList.Add(new ItemQuantityEntry { itemId = kvp.Key, quantity = kvp.Value });
+        }
+    }
+
+    /// <summary>
+    /// Gọi sau khi deserialize (trong SaveManager.Load()).
+    /// Convert List → Dictionary để dùng runtime.
+    /// </summary>
+    public void AfterDeserialization()
+    {
+        itemQuantities.Clear();
+        foreach (var entry in itemQuantityList)
+        {
+            itemQuantities[entry.itemId] = entry.quantity;
+        }
+    }
 }
 
 /// <summary>
@@ -44,7 +111,7 @@ public class SaveManager : MonoBehaviour
     private const string SaveKey = "HOLEXGAME_PLAYER_DATA";
 
     /// <summary>Dữ liệu đang được load. Null cho đến khi Initialize() hoàn tất.</summary>
-    public PlayerData Data { get; private set; }
+    public PlayerData PlayerData { get; private set; }
 
     // =========================================================================
     // Public API
@@ -52,15 +119,18 @@ public class SaveManager : MonoBehaviour
 
     public async UniTask Initialize()
     {
-        Data = await Load();
+        PlayerData = await Load();
     }
 
     public async UniTask Save()
     {
-        if (Data == null)
-            Data = CreateDefaultData();
+        if (PlayerData == null)
+            PlayerData = CreateDefaultData();
 
-        string json = JsonUtility.ToJson(Data);
+        // Serialize Dictionary → List trước khi JsonUtility.ToJson
+        PlayerData.PrepareForSerialization();
+
+        string json = JsonUtility.ToJson(PlayerData);
         string encodedJson = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json));
 
         // PlayerPrefs là Unity API — thao tác lưu phải ở main thread.
@@ -70,6 +140,21 @@ public class SaveManager : MonoBehaviour
         PlayerPrefs.Save();
 
         await UniTask.Yield();
+    }
+
+    /// <summary>
+    /// Xóa toàn bộ save data trên disk và reset PlayerData về default.
+    /// Gọi xong thì PlayerData = default, giống như lần đầu chạy game.
+    /// Chỉ dùng trong Editor (gọi từ EditorCheatController).
+    /// </summary>
+    public void DeleteSaveData()
+    {
+        PlayerPrefs.DeleteKey(SaveKey);
+        PlayerPrefs.Save();
+
+        PlayerData = CreateDefaultData();
+
+        Debug.Log("[SaveManager] Save data đã bị xóa. PlayerData reset về default.");
     }
 
     // =========================================================================
@@ -83,7 +168,7 @@ public class SaveManager : MonoBehaviour
         if (!PlayerPrefs.HasKey(SaveKey))
         {
             PlayerData defaultData = CreateDefaultData();
-            Data = defaultData;
+            PlayerData = defaultData;
             await Save();
             return defaultData;
         }
@@ -98,6 +183,10 @@ public class SaveManager : MonoBehaviour
             if (loadedData != null && loadedData.profile == null)
                 loadedData.profile = new ProfileData();
 
+            // Deserialize List → Dictionary
+            if (loadedData != null)
+                loadedData.AfterDeserialization();
+
             return loadedData ?? CreateDefaultData();
         }
         catch (Exception exception)
@@ -105,7 +194,7 @@ public class SaveManager : MonoBehaviour
             Debug.LogWarning($"Save data is invalid. A new save will be created. {exception.Message}");
 
             PlayerData defaultData = CreateDefaultData();
-            Data = defaultData;
+            PlayerData = defaultData;
             await Save();
             return defaultData;
         }
@@ -115,11 +204,14 @@ public class SaveManager : MonoBehaviour
     {
         return new PlayerData
         {
-            bgmVolume = 1f,
-            sfxVolume = 1f,
-            highscore = 0,
-            medals    = 0,
-            profile   = new ProfileData(),
+            bgmVolume        = 1f,
+            sfxVolume        = 1f,
+            highscore        = 0,
+            medals           = 0,
+            currentLevelIndex = -1,
+            profile          = new ProfileData(),
+            currency         = 5000,
+            lives            = 10,
         };
     }
 }

@@ -3,82 +3,180 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Một slot item trong item bar.
-/// Hiển thị icon, label, và overlay cooldown.
-/// Gắn vào mỗi slot GameObject con của item bar trong GameplayPanel.
+/// UI slot cho một item trong gameplay.
+/// Hierarchy (tên child phải đúng để auto-resolve):
+///   Item (root, có Button component)
+///   ├── Icon          (Image)
+///   ├── CountText     (TMP_Text)
+///   └── LockedOverlay (GameObject)
+///
+/// Các reference được tự động tìm trong Awake() theo tên child.
+/// Có thể override bằng cách kéo tay vào SerializeField trong Inspector.
+///
+/// Fire OnClicked khi button pressed — GameplayPanel sẽ gọi ItemManager.UseItem().
 /// </summary>
 public class ItemSlotUI : MonoBehaviour
 {
-    [Header("UI")]
-    [SerializeField] private Image           iconImage;
-    [SerializeField] private TextMeshProUGUI labelText;
-    [SerializeField] private Image           cooldownOverlay;   // Image type=Filled, fillMethod=Radial360
-    [SerializeField] private Button          useButton;
+    [Header("UI References (tự động tìm nếu để trống)")]
+    [SerializeField] private Image iconImage;
+    [SerializeField] private TMP_Text quantityText;
+    [SerializeField] private GameObject lockedOverlay;
+    [SerializeField] private Button button;
 
-    private bool onCooldown;
+    // ── State ─────────────────────────────────────────────────────────────────
+    private ItemDefinition itemDefinition;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    /// <summary>ItemId của item đang hiển thị. Dùng để GameplayPanel tìm đúng slot khi refresh.</summary>
+    public string ItemId => itemDefinition != null ? itemDefinition.ItemId : string.Empty;
+
+    // ── Events ────────────────────────────────────────────────────────────────
+    public System.Action<ItemDefinition> OnClicked;
+
+    // =========================================================================
+    // Unity Lifecycle
+    // =========================================================================
 
     private void Awake()
     {
-        if (cooldownOverlay != null)
-            cooldownOverlay.fillAmount = 0f;
+        ResolveReferences();
+
+        if (button != null)
+            button.onClick.AddListener(HandleClick);
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    private void OnDestroy()
+    {
+        if (button != null)
+            button.onClick.RemoveListener(HandleClick);
+
+        OnClicked = null;
+    }
+
+    // =========================================================================
+    // Public API
+    // =========================================================================
 
     /// <summary>
-    /// Thiết lập icon và label cho slot này.
+    /// Setup slot với ItemDefinition và quantity hiện tại.
+    /// Gọi từ GameplayPanel khi khởi tạo hoặc khi quantity thay đổi.
     /// </summary>
-    public void Setup(Sprite icon, string label)
+    public void Setup(ItemDefinition item, int quantity)
     {
+        itemDefinition = item;
+
+        if (item == null)
+        {
+            SetEmpty();
+            return;
+        }
+
+        // Icon
         if (iconImage != null)
         {
-            iconImage.sprite  = icon;
-            iconImage.enabled = icon != null;
+            iconImage.sprite = item.Icon;
+            iconImage.enabled = item.Icon != null;
         }
 
-        if (labelText != null)
-            labelText.text = label;
+        // Quantity
+        if (quantityText != null)
+            quantityText.text = quantity.ToString();
 
-        SetInteractable(true);
+        // Locked state
+        bool isLocked = item.IsLocked || quantity <= 0;
+        if (lockedOverlay != null)
+            lockedOverlay.SetActive(isLocked);
+
+        // Button interactable
+        if (button != null)
+            button.interactable = !isLocked;
     }
 
     /// <summary>
-    /// Bắt đầu cooldown trong `duration` giây.
+    /// Refresh quantity text và locked state (gọi sau khi UseItem thành công).
     /// </summary>
-    public void StartCooldown(float duration)
+    public void UpdateQuantity(int quantity)
     {
-        if (onCooldown) return;
-        SetInteractable(false);
-        StartCoroutine(CooldownRoutine(duration));
+        if (quantityText != null)
+            quantityText.text = quantity.ToString();
+
+        bool isEmpty = quantity <= 0;
+        bool isLocked = isEmpty || (itemDefinition != null && itemDefinition.IsLocked);
+
+        if (lockedOverlay != null)
+            lockedOverlay.SetActive(isLocked);
+
+        if (button != null)
+            button.interactable = !isLocked;
     }
 
-    // ── Private ───────────────────────────────────────────────────────────────
+    // =========================================================================
+    // Internal
+    // =========================================================================
 
-    private System.Collections.IEnumerator CooldownRoutine(float duration)
+    /// <summary>
+    /// Tự động resolve các reference theo tên child trong Hierarchy.
+    /// Chỉ gán nếu SerializeField chưa được kéo tay trong Inspector.
+    /// </summary>
+    private void ResolveReferences()
     {
-        onCooldown = true;
-        float elapsed = 0f;
+        // Button nằm trên chính root GameObject
+        if (button == null)
+            button = GetComponent<Button>();
 
-        while (elapsed < duration)
+        // Icon: child tên "Icon", lấy Image component
+        if (iconImage == null)
         {
-            elapsed += Time.deltaTime;
-            if (cooldownOverlay != null)
-                cooldownOverlay.fillAmount = 1f - Mathf.Clamp01(elapsed / duration);
-            yield return null;
+            Transform iconTransform = transform.Find("Icon");
+            if (iconTransform != null)
+                iconImage = iconTransform.GetComponent<Image>();
         }
 
-        if (cooldownOverlay != null)
-            cooldownOverlay.fillAmount = 0f;
+        // CountText: child tên "CountText", lấy TMP_Text component
+        if (quantityText == null)
+        {
+            Transform countTransform = transform.Find("CountText");
+            if (countTransform != null)
+                quantityText = countTransform.GetComponent<TMP_Text>();
+        }
 
-        onCooldown = false;
-        SetInteractable(true);
+        // LockedOverlay: child tên "LockedOverlay", lấy GameObject
+        if (lockedOverlay == null)
+        {
+            Transform overlayTransform = transform.Find("LockedOverlay");
+            if (overlayTransform != null)
+                lockedOverlay = overlayTransform.gameObject;
+        }
+
+        // Log cảnh báo nếu vẫn thiếu sau khi auto-resolve
+        if (button == null)
+            Debug.LogWarning("[ItemSlotUI] Button không tìm thấy trên root GameObject.", this);
+
+        if (iconImage == null)
+            Debug.LogWarning("[ItemSlotUI] Không tìm thấy child 'Icon' có Image component.", this);
+
+        if (quantityText == null)
+            Debug.LogWarning("[ItemSlotUI] Không tìm thấy child 'CountText' có TMP_Text component.", this);
     }
 
-    private void SetInteractable(bool interactable)
+    private void SetEmpty()
     {
-        if (useButton != null)
-            useButton.interactable = interactable;
+        if (iconImage != null)
+            iconImage.enabled = false;
+
+        if (quantityText != null)
+            quantityText.text = "";
+
+        if (lockedOverlay != null)
+            lockedOverlay.SetActive(true);
+
+        if (button != null)
+            button.interactable = false;
+    }
+
+    private void HandleClick()
+    {
+        if (itemDefinition == null) return;
+
+        OnClicked?.Invoke(itemDefinition);
     }
 }

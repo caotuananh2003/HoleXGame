@@ -8,6 +8,10 @@ using UnityEngine;
 /// OnTriggerEnter: object rơi vào collider → fire event với Obstacle data
 /// OnTriggerExit:  object rơi xuyên qua hoàn toàn → disable
 ///
+/// Bomb logic:
+///   Nếu obstacle.Type == Bomb và BombShieldEffect.IsActive == false
+///   → Fire OnBombSwallowedWithoutShield → GameplayController trigger game over
+///
 /// Trigger collider cần gắn trên cùng GameObject với script này (Player root).
 /// </summary>
 public class SwallowHandler : MonoBehaviour
@@ -20,29 +24,55 @@ public class SwallowHandler : MonoBehaviour
     /// </summary>
     public event Action<Obstacle> OnObjectSwallowed;
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.layer == Swallowable)
-        {
-            // Lấy Obstacle component từ object bị nuốt
-            Obstacle obstacle = other.GetComponent<Obstacle>();
-            
-            if (obstacle != null && obstacle.ObstacleDefinition != null)
-            {
-                Debug.Log($"Swallowing {other.gameObject.name} (Type: {obstacle.ObstacleDefinition.ObstacleID})");
-                OnObjectSwallowed?.Invoke(obstacle);
-            }
-            else
-            {
-                Debug.LogWarning($"[SwallowHandler] Object {other.gameObject.name} trên layer Swallowable nhưng không có Obstacle component hoặc Definition!", other);
-            }
-        }
-    }
+    /// <summary>
+    /// Event fire khi swallow bomb mà không có shield.
+    /// GameplayController subscribe để trigger game over.
+    /// </summary>
+    public event Action OnBombSwallowedWithoutShield;
 
     private void OnTriggerExit(Collider other)
     {
         if (other.transform.position.y >= 0f) return;
 
-        other.gameObject.SetActive(false);
+        if (other.gameObject.layer == Swallowable)
+        {
+            // Lấy Obstacle component từ object bị nuốt
+            Obstacle obstacle = other.GetComponentInParent<Obstacle>();
+            if (obstacle == null)
+            {
+                Debug.LogWarning($"[SwallowHandler] Object {other.gameObject.name} trên layer Swallowable nhưng không có Obstacle component!", other);
+                other.transform.parent.gameObject.SetActive(false);
+                return;
+            }
+
+            if (obstacle.ObstacleDefinition == null)
+            {
+                Debug.LogWarning($"[SwallowHandler] Obstacle {obstacle.name} không có ObstacleDefinition!", obstacle);
+                other.transform.parent.gameObject.SetActive(false);
+                return;
+            }
+
+            // ── Check Bomb Logic ──────────────────────────────────────────────
+            if (obstacle.ObstacleDefinition.Type == ObstacleType.Bomb)
+            {
+                if (!BombShieldEffect.IsActive)
+                {
+                    Debug.Log($"[SwallowHandler] Swallowed BOMB without shield — triggering game over!");
+                    OnBombSwallowedWithoutShield?.Invoke();
+                    other.transform.parent.gameObject.SetActive(false);
+                    return; // Không fire OnObjectSwallowed — bomb không tính score
+                }
+                else
+                {
+                    Debug.Log($"[SwallowHandler] Swallowed BOMB but shield is active — no game over.");
+                    // Shield active → swallow bomb như normal object, fire OnObjectSwallowed
+                }
+            }
+
+            // ── Normal Swallow ────────────────────────────────────────────────
+            Debug.Log($"[SwallowHandler] Swallowing {other.gameObject.name} (Type: {obstacle.ObstacleDefinition.Id})");
+            OnObjectSwallowed?.Invoke(obstacle);
+            other.transform.parent.gameObject.SetActive(false);
+        }
     }
 }

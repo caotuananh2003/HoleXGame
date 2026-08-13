@@ -44,8 +44,8 @@ public class AudioManager : MonoBehaviour
     private float preMuteBGMVolume = 1f;
     private float preMuteSFXVolume = 1f;
 
-    public bool IsBGMMuted => saveManager?.Data != null && saveManager.Data.bgmVolume <= 0f;
-    public bool IsSFXMuted => saveManager?.Data != null && saveManager.Data.sfxVolume <= 0f;
+    public bool IsBGMMuted => saveManager?.PlayerData != null && saveManager.PlayerData.bgmVolume <= 0f;
+    public bool IsSFXMuted => saveManager?.PlayerData != null && saveManager.PlayerData.sfxVolume <= 0f;
 
     [Inject]
     private void Construct(SaveManager saveManager)
@@ -55,18 +55,18 @@ public class AudioManager : MonoBehaviour
 
     public void Initialize()
     {
-        Debug.Log("AudioManager initialized.");
+        //Debug.Log("AudioManager initialized.");
         EnsureAudioSources();
         BuildClipCache();
 
-        if (saveManager?.Data == null)
+        if (saveManager?.PlayerData == null)
         {
             Debug.LogWarning("AudioManager initialized before SaveManager data was ready.");
             return;
         }
 
-        ApplyMixerVolume(BGMVolumeParameter, saveManager.Data.bgmVolume);
-        ApplyMixerVolume(SFXVolumeParameter, saveManager.Data.sfxVolume);
+        ApplyMixerVolume(BGMVolumeParameter, saveManager.PlayerData.bgmVolume);
+        ApplyMixerVolume(SFXVolumeParameter, saveManager.PlayerData.sfxVolume);
     }
 
     public void PlaySFX(string id)
@@ -103,10 +103,10 @@ public class AudioManager : MonoBehaviour
         float clampedVolume = Mathf.Clamp01(volume);
         ApplyMixerVolume(BGMVolumeParameter, clampedVolume);
 
-        if (saveManager?.Data == null)
+        if (saveManager?.PlayerData == null)
             return;
 
-        saveManager.Data.bgmVolume = clampedVolume;
+        saveManager.PlayerData.bgmVolume = clampedVolume;
         saveManager.Save().Forget();
     }
 
@@ -115,10 +115,10 @@ public class AudioManager : MonoBehaviour
         float clampedVolume = Mathf.Clamp01(volume);
         ApplyMixerVolume(SFXVolumeParameter, clampedVolume);
 
-        if (saveManager?.Data == null)
+        if (saveManager?.PlayerData == null)
             return;
 
-        saveManager.Data.sfxVolume = clampedVolume;
+        saveManager.PlayerData.sfxVolume = clampedVolume;
         saveManager.Save().Forget();
     }
 
@@ -129,8 +129,8 @@ public class AudioManager : MonoBehaviour
     {
         if (mute)
         {
-            if (saveManager?.Data != null)
-                preMuteBGMVolume = saveManager.Data.bgmVolume > 0f ? saveManager.Data.bgmVolume : 1f;
+            if (saveManager?.PlayerData != null)
+                preMuteBGMVolume = saveManager.PlayerData.bgmVolume > 0f ? saveManager.PlayerData.bgmVolume : 1f;
 
             SetBGMVolume(0f);
         }
@@ -147,8 +147,8 @@ public class AudioManager : MonoBehaviour
     {
         if (mute)
         {
-            if (saveManager?.Data != null)
-                preMuteSFXVolume = saveManager.Data.sfxVolume > 0f ? saveManager.Data.sfxVolume : 1f;
+            if (saveManager?.PlayerData != null)
+                preMuteSFXVolume = saveManager.PlayerData.sfxVolume > 0f ? saveManager.PlayerData.sfxVolume : 1f;
 
             SetSFXVolume(0f);
         }
@@ -162,13 +162,13 @@ public class AudioManager : MonoBehaviour
     {
         if (bgmSource == null)
         {
-            Debug.Log("Creating bgmSource");
+            //Debug.Log("Creating bgmSource");
             bgmSource = CreateAudioSource("BGM Source", true, "BGM");
         }
 
         if (sfxSource == null)
         {
-            Debug.Log("Creating sfxSource");
+            //Debug.Log("Creating sfxSource");
             sfxSource = CreateAudioSource("SFX Source", false, "SFX");
         }
     }

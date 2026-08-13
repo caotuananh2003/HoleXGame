@@ -17,6 +17,23 @@ public class GameplayLifetimeScope : LifetimeScope
     {
         // ── UI ────────────────────────────────────────────────────────────────
         builder.RegisterComponentInHierarchy<UISceneRoot>();
+        // GameplayPanel: inject GameplayObjectiveManager, ItemManager
+        builder.RegisterComponentInHierarchy<GameplayPanel>();
+
+        // ── Popups có [Inject] ────────────────────────────────────────────────
+        // GameOverTimeUpPopup: inject GameTimer, HoleController, SceneManagerService, GameManager, SaveManager
+        builder.RegisterComponentInHierarchy<GameOverTimeUpPopup>();
+        builder.RegisterComponentInHierarchy<GameTimer>();
+        // GameOverBombPopup: inject SceneManagerService, GameManager
+        builder.RegisterComponentInHierarchy<GameOverBombPopup>();
+        // GameWinPopup: inject SaveManager, SceneManagerService, GameManager
+        builder.RegisterComponentInHierarchy<GameWinPopup>();
+
+        // ── Skin / Theme Appliers ─────────────────────────────────────────────
+        // HoleSkinApplier: inject SaveManager
+        builder.RegisterComponentInHierarchy<HoleSkinApplier>();
+        // MapThemeApplier: inject SaveManager
+        builder.RegisterComponentInHierarchy<MapThemeApplier>();
 
         // ── Gameplay ──────────────────────────────────────────────────────────
         // GameplayController: inject GameManager, SaveManager, UIManager,
@@ -28,6 +45,8 @@ public class GameplayLifetimeScope : LifetimeScope
 
         // ── Level ─────────────────────────────────────────────────────────────
         builder.RegisterComponentInHierarchy<LevelManager>();
+        // LevelSpawner: inject bởi LevelManager
+        builder.RegisterComponentInHierarchy<LevelSpawner>();
 
         // ── Objectives ────────────────────────────────────────────────────────
         builder.RegisterComponentInHierarchy<GameplayObjectiveManager>();
@@ -38,5 +57,9 @@ public class GameplayLifetimeScope : LifetimeScope
 
         // ── InputManager ─────────────────────────────────────────────────────────────
         builder.RegisterComponentInHierarchy<InputManager>();
+
+        // ── Items ─────────────────────────────────────────────────────────────
+        // ItemManager: inject SaveManager (từ parent scope GameLifetimeScope)
+        builder.RegisterComponentInHierarchy<ItemManager>();
     }
 }

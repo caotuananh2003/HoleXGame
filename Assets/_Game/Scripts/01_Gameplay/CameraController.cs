@@ -1,58 +1,58 @@
-using System.Collections;
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>
-/// Zoom camera ra khi hole lớn lên.
+/// Dịch chuyển local position của Camera khi hole grow.
+/// Gắn lên Camera — là child của Player.
+///
+/// Mỗi lần OnGrown fire:
+///   localPosition.y += cameraStepY  (default +10)
+///   localPosition.z -= cameraStepZ  (default  +5)
+///
+/// Dùng localPosition vì Camera là child của Player.
+/// HoleSizeController tự tìm qua GetComponentInParent — không cần kéo Inspector.
 /// </summary>
 public class CameraController : MonoBehaviour
 {
-    [SerializeField] private float zoomDuration = 0.5f;
+    [Header("Grow Step")]
+    [SerializeField] private float cameraStepY  = 10f;
+    [SerializeField] private float cameraStepZ  = 5f;
+    [SerializeField] private float growDuration = 0.5f;
+    [SerializeField] private Ease  growEase     = Ease.OutCubic;
 
-    private HoleSizeController sizeController;
-    private Vector3            defaultLocalPos;
-    private Vector3            step;
-
-    private void Awake()
-    {
-        sizeController = FindAnyObjectByType<HoleSizeController>();
-
-        if (sizeController == null)
-            Debug.LogWarning("[CameraController] Không tìm thấy HoleSizeController trên parent.");
-    }
+    private HoleSizeController holeSizeController;
 
     private void Start()
     {
-        sizeController.OnGrown += OnHoleGrown;
-    }
+        holeSizeController = GetComponentInParent<HoleSizeController>();
 
-    private void OnHoleGrown(float newScale)
-    {
-        defaultLocalPos = transform.localPosition;
-        step = newScale > 0f ? defaultLocalPos / newScale : defaultLocalPos;
-
-        StopAllCoroutines();
-        StartCoroutine(AnimateZoom(newScale));
-    }
-
-    private IEnumerator AnimateZoom(float targetScale)
-    {
-        Vector3 startPos  = transform.localPosition;
-        Vector3 targetPos = step * targetScale;
-
-        float t = 0f;
-        while (t < zoomDuration)
+        if (holeSizeController == null)
         {
-            t += Time.deltaTime;
-            transform.localPosition = Vector3.Lerp(startPos, targetPos, t / zoomDuration);
-            yield return null;
+            Debug.LogWarning("[CameraController] Không tìm thấy HoleSizeController trên parent.");
+            return;
         }
 
-        transform.localPosition = targetPos;
+        holeSizeController.OnGrown += HandleGrown;
     }
 
     private void OnDestroy()
     {
-        if (sizeController != null)
-            sizeController.OnGrown -= OnHoleGrown;
+        if (holeSizeController != null)
+            holeSizeController.OnGrown -= HandleGrown;
+
+        DOTween.Kill(transform);
+    }
+
+    // =========================================================================
+    // Internal
+    // =========================================================================
+
+    private void HandleGrown(float newRadius)
+    {
+        Vector3 target = transform.localPosition
+                         + new Vector3(0f, cameraStepY, -cameraStepZ);
+
+        transform.DOLocalMove(target, growDuration)
+            .SetEase(growEase);
     }
 }
