@@ -11,6 +11,7 @@ using UnityEngine.UI;
 public class TabButton : MonoBehaviour
 {
     [SerializeField] private GameObject selectedVisual;
+    [SerializeField] private GameObject unSelectedVisual;
     private Button button;
 
     private void Awake()
@@ -21,15 +22,12 @@ public class TabButton : MonoBehaviour
     public void Initialize(Action onClicked)
     {
         button.onClick.AddListener(() => onClicked?.Invoke());
-        //Debug.Log($"{name} : Initialize");
     }
 
     public void SetSelected(bool selected)
     {
-        if (selectedVisual != null)
-        {
-            selectedVisual.SetActive(selected);
-        }
+        selectedVisual.SetActive(selected);
+        unSelectedVisual.SetActive(!selected);
     }
 
     private void OnDestroy()

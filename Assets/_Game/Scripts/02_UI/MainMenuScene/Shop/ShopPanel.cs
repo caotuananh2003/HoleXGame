@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 using VContainer;
 
 /// <summary>
@@ -57,9 +56,9 @@ public class ShopPanel : UIWindow
     [SerializeField] private TMP_Text currencyText;   // Text hiển thị số currency
 
     [Header("Tab Buttons")]
-    [SerializeField] private Button mainTabButton;
-    [SerializeField] private Button holeSkinTabButton;
-    [SerializeField] private Button mapThemeTabButton;
+    [SerializeField] private TabButton mainTabButton;
+    [SerializeField] private TabButton holeSkinTabButton;
+    [SerializeField] private TabButton mapThemeTabButton;
 
     [Header("ScrollView Roots")]
     [SerializeField] private GameObject itemScrollView;
@@ -131,7 +130,6 @@ public class ShopPanel : UIWindow
 
     private void OnDestroy()
     {
-        UnregisterButtons();
         UnregisterInfoPanelEvents();
         ClearAllLists();
     }
@@ -467,25 +465,22 @@ public class ShopPanel : UIWindow
         if (itemScrollView     != null) itemScrollView.SetActive(tab == ShopTab.Main);
         if (holeSkinScrollView != null) holeSkinScrollView.SetActive(tab == ShopTab.HoleSkin);
         if (mapThemeScrollView != null) mapThemeScrollView.SetActive(tab == ShopTab.MapTheme);
+
+        mainTabButton?.SetSelected(activeTab == ShopTab.Main);
+        holeSkinTabButton?.SetSelected(activeTab == ShopTab.HoleSkin);
+        mapThemeTabButton?.SetSelected(activeTab == ShopTab.MapTheme);
+    }
+
+    private void RegisterButtons()
+    {
+        mainTabButton?.Initialize(OnMainTabClicked);
+        holeSkinTabButton?.Initialize(OnHoleSkinTabClicked);
+        mapThemeTabButton?.Initialize(OnMapThemeTabClicked);
     }
 
     private void OnMainTabClicked()     => ShowTab(ShopTab.Main);
     private void OnHoleSkinTabClicked() => ShowTab(ShopTab.HoleSkin);
     private void OnMapThemeTabClicked() => ShowTab(ShopTab.MapTheme);
-
-    private void RegisterButtons()
-    {
-        if (mainTabButton     != null) mainTabButton.onClick.AddListener(OnMainTabClicked);
-        if (holeSkinTabButton != null) holeSkinTabButton.onClick.AddListener(OnHoleSkinTabClicked);
-        if (mapThemeTabButton != null) mapThemeTabButton.onClick.AddListener(OnMapThemeTabClicked);
-    }
-
-    private void UnregisterButtons()
-    {
-        if (mainTabButton     != null) mainTabButton.onClick.RemoveListener(OnMainTabClicked);
-        if (holeSkinTabButton != null) holeSkinTabButton.onClick.RemoveListener(OnHoleSkinTabClicked);
-        if (mapThemeTabButton != null) mapThemeTabButton.onClick.RemoveListener(OnMapThemeTabClicked);
-    }
     #endregion
 
     // =========================================================================
