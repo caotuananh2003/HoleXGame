@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5364895197781169603}
   - component: {fileID: 8864358176561766358}
   - component: {fileID: 473994592750384782}
+  - component: {fileID: 643897598151498736}
   m_Layer: 5
   m_Name: AvatarItem
   m_TagString: Untagged
@@ -39,7 +40,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 250, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4609891071414993180
 CanvasRenderer:
@@ -137,8 +138,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AvatarItemUI
   iconImage: {fileID: 5364895197781169603}
   selectedOverlay: {fileID: 4736196163802553119}
-  lockOverlay: {fileID: 5048686050633524201}
+  unlockedObject: {fileID: 0}
+  lockedObject: {fileID: 0}
   button: {fileID: 8864358176561766358}
+--- !u!114 &643897598151498736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3210755387588170758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17705561cef2cf241ac035dd69db507f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSFX
+  sfxId: sfx_ui_click
 --- !u!1 &4736196163802553119
 GameObject:
   m_ObjectHideFlags: 0

@@ -29,6 +29,12 @@ public class RemoveAdsPopup : UIWindow
     // Unity lifecycle
     // =========================================================================
 
+    public override void Open()
+    {
+        base.Open();
+        UIManager?.PlaySFX(AudioID.SFX.UiPopup);
+    }
+
     private void Start()
     {
         if (closeButton == null)

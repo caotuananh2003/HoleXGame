@@ -1,30 +1,35 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
 
 public class EditProfilePopup : UIWindow
 {
-    private enum ProfileTab { Avatar, Frame, Badge } // Enum các button
+    private enum ProfileTab { Avatar, Frame, Badge }
+    private ProfileTab activeTab = ProfileTab.Avatar;
 
     [Header("Navigation")]
     [SerializeField] private Button closeButton;
 
+    [Header("Name")]
+    [SerializeField] private TMP_Text nameText;       // Hiển thị tên hiện tại
+    [SerializeField] private Button   editNameButton; // Mở EditNamePopup
+
     [Header("Preview")]
-    [SerializeField] private ProfilePreview profilePreview; // ChildObject
+    [SerializeField] private ProfilePreview profilePreview;
 
     [Header("Tab Buttons")]
-    [SerializeField] private Button avatarTabButton;
-    [SerializeField] private Button frameTabButton;
-    [SerializeField] private Button badgeTabButton;
+    [SerializeField] private TabButton _avatarTabButton;
+    [SerializeField] private TabButton _frameTabButton;
+    [SerializeField] private TabButton _badgeTabButton;
 
     [Header("Scroll Contents")]
     [SerializeField] private Transform avatarContent;
     [SerializeField] private Transform frameContent;
     [SerializeField] private Transform badgeContent;
 
-    // ScrollRect dùng chung cho cả 3 tab — content sẽ được swap khi đổi tab
     [Header("ScrollRect")]
     [SerializeField] private ScrollRect scrollRect;
 
@@ -37,7 +42,7 @@ public class EditProfilePopup : UIWindow
     [SerializeField] private Button saveButton;
 
     [Header("Data")]
-    [SerializeField] private PlayerProfile playerProfile; // ScriptableObject chứa Data
+    [SerializeField] private PlayerProfile playerProfile;
 
     private SaveManager saveManager;
 
@@ -47,16 +52,13 @@ public class EditProfilePopup : UIWindow
         this.saveManager = saveManager;
     }
 
-    private ProfileData editingData; // Class chứa bản copy đang chỉnh sửa — không phải SaveManager.Data.profile.
-    private ProfileData savedSnapshot; // Class chứa bản Snapshot lúc mở popup — dùng để so sánh dirty.
-    private ProfileTab activeTab = ProfileTab.Avatar;
+    private ProfileData editingData;
+    private ProfileData savedSnapshot;
 
-    // Danh sách item đã spawn — dùng để SetSelected và unsubscribe OnClicked
     private readonly List<AvatarItemUI> avatarItems = new();
     private readonly List<FrameItemUI>  frameItems  = new();
     private readonly List<BadgeItemUI>  badgeItems  = new();
 
-    // Flag: Start() đã chạy chưa — tránh OnEnable chạy trước Start
     private bool listsPopulated;
     private bool isStarted;
 
@@ -67,9 +69,6 @@ public class EditProfilePopup : UIWindow
         ValidateInspectorRefs();
         RegisterButtons();
 
-        // Init database cho ProfilePreview — bắt buộc phải chạy trước mọi Refresh().
-        // Đây là lý do Init nằm ở Start, không thể ở OnEnable:
-        // OnEnable chạy trước Start, database chưa sẵn sàng → Refresh sẽ ra ảnh trắng.
         if (playerProfile != null)
         {
             profilePreview.Init(
@@ -78,26 +77,19 @@ public class EditProfilePopup : UIWindow
                 playerProfile.BadgeDatabase);
         }
 
-        // Spawn items một lần duy nhất.
         if (!listsPopulated)
         {
             PopulateAllLists();
             listsPopulated = true;
         }
 
-        // OnEnable đã chạy trước Start và bị skip (isStarted = false lúc đó).
-        // Gọi RefreshOpenState ngay bây giờ để hiển thị đúng ngay lần mở đầu tiên.
         if (gameObject.activeSelf)
             RefreshOpenState();
     }
 
     private void OnEnable()
     {
-        // Lần đầu tiên (trước Start): bỏ qua.
-        // Lý do: profilePreview.Init() chưa chạy, gọi Refresh lúc này → ảnh trắng.
-        // Start() sẽ gọi RefreshOpenState() thay thế.
         if (!isStarted) return;
-
         RefreshOpenState();
     }
 
@@ -108,28 +100,41 @@ public class EditProfilePopup : UIWindow
     }
 
     // =========================================================================
-    // Open state — chạy mỗi lần popup được mở
+    // Open state
     // =========================================================================
 
-    /// <summary>
-    /// Reset editingData về trạng thái đã lưu và cập nhật toàn bộ UI.
-    /// Gọi mỗi lần popup Enable, sau khi Start() đã hoàn tất.
-    /// </summary>
     private void RefreshOpenState()
     {
         if (saveManager == null || playerProfile == null) return;
 
-        // Luôn clone lại từ saved data mỗi lần mở.
-        // → Bỏ toàn bộ thay đổi chưa save từ lần mở trước.
         savedSnapshot = saveManager.PlayerData.profile.Clone();
         editingData   = savedSnapshot.Clone();
 
-        // Tab mặc định là Avatar mỗi lần mở.
         ShowTab(ProfileTab.Avatar);
 
-        // Preview hiển thị avatar/frame/badge hiện tại đang dùng.
+        // Hiển thị name hiện tại lên nameText
+        RefreshNameText();
+
         profilePreview.Refresh(editingData);
     }
+
+    // =========================================================================
+    // Public API — gọi từ EditNamePopup khi nhấn ContinueButton
+    // =========================================================================
+
+    /// <summary>
+    /// Cập nhật tên vào editingData và nameText.
+    /// Chưa save — chỉ save khi nhấn SaveButton.
+    /// </summary>
+    public void ApplyNameFromPopup(string newName)
+    {
+        editingData.playerName = newName;
+        profilePreview.SetName(newName);
+        RefreshNameText();
+    }
+
+    /// <summary>Tên hiện tại đang được edit — EditNamePopup đọc để hiển thị ban đầu.</summary>
+    public string CurrentEditingName => editingData?.playerName ?? string.Empty;
 
     // =========================================================================
     // Tab
@@ -139,12 +144,14 @@ public class EditProfilePopup : UIWindow
     {
         activeTab = tab;
 
-        avatarContent.gameObject.SetActive(tab == ProfileTab.Avatar);
-        frameContent.gameObject.SetActive(tab == ProfileTab.Frame);
-        badgeContent.gameObject.SetActive(tab == ProfileTab.Badge);
+        if (avatarContent != null) avatarContent.gameObject.SetActive(tab == ProfileTab.Avatar);
+        if (frameContent  != null) frameContent.gameObject.SetActive(tab == ProfileTab.Frame);
+        if (badgeContent  != null) badgeContent.gameObject.SetActive(tab == ProfileTab.Badge);
 
-        // Swap content của ScrollRect theo tab đang active.
-        // Giúp scroll position được quản lý đúng và ScrollRect biết content nào cần scroll.
+        _avatarTabButton?.SetSelected(tab == ProfileTab.Avatar);
+        _frameTabButton?.SetSelected(tab == ProfileTab.Frame);
+        _badgeTabButton?.SetSelected(tab == ProfileTab.Badge);
+
         if (scrollRect != null)
         {
             scrollRect.content = tab switch
@@ -155,7 +162,6 @@ public class EditProfilePopup : UIWindow
                 _                 => scrollRect.content,
             };
 
-            // Reset scroll về đầu mỗi khi đổi tab
             scrollRect.verticalNormalizedPosition = 1f;
         }
 
@@ -163,7 +169,7 @@ public class EditProfilePopup : UIWindow
     }
 
     // =========================================================================
-    // Populate lists — chỉ chạy một lần trong Start()
+    // Populate
     // =========================================================================
 
     private void PopulateAllLists()
@@ -240,6 +246,23 @@ public class EditProfilePopup : UIWindow
     }
 
     // =========================================================================
+    // Name
+    // =========================================================================
+
+    private void RefreshNameText()
+    {
+        if (nameText == null) return;
+        nameText.text = string.IsNullOrWhiteSpace(editingData?.playerName)
+            ? "Player"
+            : editingData.playerName;
+    }
+
+    private void OnEditNameClicked()
+    {
+        UIManager?.Open<EditNamePopup>();
+    }
+
+    // =========================================================================
     // Save
     // =========================================================================
 
@@ -254,6 +277,7 @@ public class EditProfilePopup : UIWindow
         saveManager.PlayerData.profile.selectedAvatarId = editingData.selectedAvatarId;
         saveManager.PlayerData.profile.selectedFrameId  = editingData.selectedFrameId;
         saveManager.PlayerData.profile.selectedBadgeId  = editingData.selectedBadgeId;
+        saveManager.PlayerData.profile.playerName       = editingData.playerName;
 
         saveManager.Save().Forget();
 
@@ -274,7 +298,7 @@ public class EditProfilePopup : UIWindow
         bool isDirty = editingData != null && !editingData.Equals(savedSnapshot);
 
         if (isDirty)
-            Debug.Log("Chưa save");
+            Debug.Log("[EditProfilePopup] Chưa save.");
 
         UIManager?.Close<EditProfilePopup>();
     }
@@ -293,20 +317,20 @@ public class EditProfilePopup : UIWindow
 
     private void RegisterButtons()
     {
-        if (closeButton     != null) closeButton.onClick.AddListener(OnCloseClicked);
-        if (saveButton      != null) saveButton.onClick.AddListener(OnSaveClicked);
-        if (avatarTabButton != null) avatarTabButton.onClick.AddListener(OnAvatarTabClicked);
-        if (frameTabButton  != null) frameTabButton.onClick.AddListener(OnFrameTabClicked);
-        if (badgeTabButton  != null) badgeTabButton.onClick.AddListener(OnBadgeTabClicked);
+        if (closeButton    != null) closeButton.onClick.AddListener(OnCloseClicked);
+        if (saveButton     != null) saveButton.onClick.AddListener(OnSaveClicked);
+        if (editNameButton != null) editNameButton.onClick.AddListener(OnEditNameClicked);
+
+        _avatarTabButton?.Initialize(OnAvatarTabClicked);
+        _frameTabButton?.Initialize(OnFrameTabClicked);
+        _badgeTabButton?.Initialize(OnBadgeTabClicked);
     }
 
     private void UnregisterButtons()
     {
-        if (closeButton     != null) closeButton.onClick.RemoveListener(OnCloseClicked);
-        if (saveButton      != null) saveButton.onClick.RemoveListener(OnSaveClicked);
-        if (avatarTabButton != null) avatarTabButton.onClick.RemoveListener(OnAvatarTabClicked);
-        if (frameTabButton  != null) frameTabButton.onClick.RemoveListener(OnFrameTabClicked);
-        if (badgeTabButton  != null) badgeTabButton.onClick.RemoveListener(OnBadgeTabClicked);
+        if (closeButton    != null) closeButton.onClick.RemoveListener(OnCloseClicked);
+        if (saveButton     != null) saveButton.onClick.RemoveListener(OnSaveClicked);
+        if (editNameButton != null) editNameButton.onClick.RemoveListener(OnEditNameClicked);
     }
 
     // =========================================================================
@@ -332,10 +356,12 @@ public class EditProfilePopup : UIWindow
     {
         if (closeButton      == null) Debug.LogWarning("[EditProfilePopup] closeButton is not assigned.");
         if (saveButton       == null) Debug.LogWarning("[EditProfilePopup] saveButton is not assigned.");
+        if (nameText         == null) Debug.LogWarning("[EditProfilePopup] nameText is not assigned.");
+        if (editNameButton   == null) Debug.LogWarning("[EditProfilePopup] editNameButton is not assigned.");
         if (profilePreview   == null) Debug.LogWarning("[EditProfilePopup] profilePreview is not assigned.");
-        if (avatarTabButton  == null) Debug.LogWarning("[EditProfilePopup] avatarTabButton is not assigned.");
-        if (frameTabButton   == null) Debug.LogWarning("[EditProfilePopup] frameTabButton is not assigned.");
-        if (badgeTabButton   == null) Debug.LogWarning("[EditProfilePopup] badgeTabButton is not assigned.");
+        if (_avatarTabButton == null) Debug.LogWarning("[EditProfilePopup] avatarTabButton is not assigned.");
+        if (_frameTabButton  == null) Debug.LogWarning("[EditProfilePopup] frameTabButton is not assigned.");
+        if (_badgeTabButton  == null) Debug.LogWarning("[EditProfilePopup] badgeTabButton is not assigned.");
         if (avatarContent    == null) Debug.LogWarning("[EditProfilePopup] avatarContent is not assigned.");
         if (frameContent     == null) Debug.LogWarning("[EditProfilePopup] frameContent is not assigned.");
         if (badgeContent     == null) Debug.LogWarning("[EditProfilePopup] badgeContent is not assigned.");
@@ -343,6 +369,6 @@ public class EditProfilePopup : UIWindow
         if (frameItemPrefab  == null) Debug.LogWarning("[EditProfilePopup] frameItemPrefab is not assigned.");
         if (badgeItemPrefab  == null) Debug.LogWarning("[EditProfilePopup] badgeItemPrefab is not assigned.");
         if (playerProfile    == null) Debug.LogWarning("[EditProfilePopup] playerProfile is not assigned.");
-        if (scrollRect       == null) Debug.LogWarning("[EditProfilePopup] scrollRect is not assigned — content sẽ không được swap khi đổi tab.");
+        if (scrollRect       == null) Debug.LogWarning("[EditProfilePopup] scrollRect is not assigned.");
     }
 }

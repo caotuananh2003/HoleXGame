@@ -21,9 +21,6 @@ public class GameplayPanel : UIWindow
     [SerializeField] private Transform objectivesContainer;
     [SerializeField] private ObjectiveUIItem objectiveItemPrefab;
 
-    [Header("Legacy - Obstacle Counter")]
-    [SerializeField] private ObstacleCounter obstacleCounter; // Deprecated: Sẽ xóa sau
-
     [Header("Item Bar")]
     [SerializeField] private Transform gameItemsContainer;  // GameplayCanvas/GameplayPanel/GameItems
     [SerializeField] private ItemSlotUI itemSlotPrefab;     // Prefab có ItemSlotUI component
@@ -41,7 +38,7 @@ public class GameplayPanel : UIWindow
     private void Construct(GameplayObjectiveManager gameplayObjectiveManager, ItemManager itemManager)
     {
         this.gameplayObjectiveManager = gameplayObjectiveManager;
-        this.itemManager = itemManager;
+        this.itemManager              = itemManager;
     }
 
     private void Start()
@@ -98,17 +95,25 @@ public class GameplayPanel : UIWindow
             // Lấy quantity — nếu chưa có trong save thì dùng defaultAmount
             int quantity = GetOrInitQuantity(itemDef);
 
+            // Lấy unlock state từ ItemManager
+            bool unlocked = itemManager.IsItemUnlocked(itemDef);
+
             // Spawn prefab
             ItemSlotUI slot = Instantiate(itemSlotPrefab, gameItemsContainer);
-            slot.Setup(itemDef, quantity);
+            slot.Setup(itemDef, quantity, unlocked);
+            slot.Initialize(itemManager); // Inject ItemManager để subscribe OnItemEffectStarted
             slot.OnClicked += OnItemSlotClicked;
 
             spawnedSlots.Add(slot);
         }
 
-        // Subscribe ItemManager events để refresh UI khi quantity thay đổi
-        itemManager.OnItemUsed += OnItemUsedHandler;
+        // Subscribe ItemManager events để refresh UI khi quantity / unlock thay đổi
+        itemManager.OnItemUsed      += OnItemUsedHandler;
         itemManager.OnItemUseFailed += OnItemUseFailedHandler;
+        itemManager.OnItemUnlocked  += OnItemUnlockedHandler;
+
+        // Check và unlock những item đủ điều kiện dựa trên số màn đã vượt qua
+        itemManager.CheckAndUnlockItems(itemDatabase);
     }
 
     /// <summary>
@@ -193,24 +198,6 @@ public class GameplayPanel : UIWindow
         item.PlayCompleteAnimation();
     }
 
-    /// <summary>
-    /// [LEGACY] Gọi từ GameplayController sau khi khởi tạo, truyền target obstacle count.
-    /// Deprecated: Sẽ thay bằng SetupObjectives.
-    /// </summary>
-    public void Setup(int targetObstacleCount)
-    {
-        obstacleCounter?.Setup(targetObstacleCount);
-    }
-
-    /// <summary>
-    /// [LEGACY] Gọi mỗi khi hole ăn được 1 object.
-    /// Deprecated: ObjectiveManager sẽ tự update UI.
-    /// </summary>
-    public void OnObjectSwallowed()
-    {
-        obstacleCounter?.IncrementEaten();
-    }
-
     // ── Item Slot Handlers ────────────────────────────────────────────────────
 
     private void OnItemSlotClicked(ItemDefinition item)
@@ -238,6 +225,23 @@ public class GameplayPanel : UIWindow
         // TODO: Show feedback UI
     }
 
+    /// <summary>
+    /// Callback khi ItemManager fire OnItemUnlocked.
+    /// Tìm đúng slot và gọi RefreshUnlockState(true).
+    /// </summary>
+    private void OnItemUnlockedHandler(string itemId)
+    {
+        foreach (ItemSlotUI slot in spawnedSlots)
+        {
+            if (slot == null) continue;
+            if (slot.ItemId != itemId) continue;
+
+            slot.RefreshUnlockState(true);
+            Debug.Log($"[GameplayPanel] Slot '{itemId}' unlocked — UI refreshed.");
+            break;
+        }
+    }
+
     private void RefreshItemSlotQuantity(string itemId)
     {
         if (itemManager == null) return;
@@ -255,20 +259,9 @@ public class GameplayPanel : UIWindow
         }
     }
 
-    ///// <summary>
-    ///// Thiết lập dữ liệu cho từng item slot theo index.
-    ///// </summary>
-    //public void SetupItem(int index, Sprite icon, string label)
-    //{
-    //    if (itemSlots == null || index < 0 || index >= itemSlots.Length) return;
-    //    itemSlots[index].Setup(icon, label);
-    //}
-
-    // ── Private ───────────────────────────────────────────────────────────────
-
     private void OnSettingClicked()
     {
-        UIManager?.PlaySFX("sfx_ui_click");
+        UIManager?.PlaySFX(AudioID.SFX.UiClick);
         UIManager?.Open<SettingPopup>();
     }
 
@@ -288,8 +281,9 @@ public class GameplayPanel : UIWindow
 
         if (itemManager != null)
         {
-            itemManager.OnItemUsed -= OnItemUsedHandler;
+            itemManager.OnItemUsed      -= OnItemUsedHandler;
             itemManager.OnItemUseFailed -= OnItemUseFailedHandler;
+            itemManager.OnItemUnlocked  -= OnItemUnlockedHandler;
         }
     }
 }

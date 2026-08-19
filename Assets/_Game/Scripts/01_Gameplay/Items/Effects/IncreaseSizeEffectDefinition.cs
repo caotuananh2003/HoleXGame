@@ -12,26 +12,20 @@ public class IncreaseSizeEffectDefinition : ItemEffectDefinition
     [Tooltip("Số lần gọi GrowHole(). Mặc định = 1 (tăng 1 bậc size).")]
     [SerializeField] private int growCount = 1;
 
-    public override void ApplyEffect(ItemEffectContext context)
+    public override ITimedEffect ApplyEffect(ItemEffectContext context)
     {
         if (context.holeController == null)
         {
             Debug.LogWarning("[IncreaseSizeEffect] HoleController is null — cannot apply effect.");
-            return;
-        }
-
-        HoleSizeController sizeController = context.holeController.GetComponent<HoleSizeController>();
-        if (sizeController == null)
-        {
-            Debug.LogWarning("[IncreaseSizeEffect] HoleSizeController not found on HoleController.");
-            return;
+            return null;
         }
 
         for (int i = 0; i < growCount; i++)
         {
-            sizeController.GrowHole();
+            context.holeController.GrowHoleManually();
         }
 
         Debug.Log($"[IncreaseSizeEffect] Applied — hole grew {growCount} time(s).");
+        return null; // Instant effect — không có duration
     }
 }

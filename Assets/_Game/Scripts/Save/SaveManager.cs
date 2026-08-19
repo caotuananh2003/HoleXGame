@@ -74,6 +74,13 @@ public class PlayerData
 
     public System.Collections.Generic.List<ItemQuantityEntry> itemQuantityList = new();
 
+    // ── Items — Unlock state ──────────────────────────────────────────────────
+    /// <summary>
+    /// Danh sách itemId đã được unlock bởi việc đạt đủ hole level.
+    /// Backward-compatible: save cũ không có field này → list rỗng → item vẫn locked.
+    /// </summary>
+    public System.Collections.Generic.List<string> unlockedItemIds = new();
+
     /// <summary>
     /// Gọi trước khi serialize (trong SaveManager.Save()).
     /// Convert Dictionary → List để JsonUtility serialize được.
@@ -90,6 +97,7 @@ public class PlayerData
     /// <summary>
     /// Gọi sau khi deserialize (trong SaveManager.Load()).
     /// Convert List → Dictionary để dùng runtime.
+    /// Đảm bảo unlockedItemIds không null khi load save cũ.
     /// </summary>
     public void AfterDeserialization()
     {
@@ -98,6 +106,10 @@ public class PlayerData
         {
             itemQuantities[entry.itemId] = entry.quantity;
         }
+
+        // Guard: save cũ không có field này → JsonUtility để null
+        if (unlockedItemIds == null)
+            unlockedItemIds = new System.Collections.Generic.List<string>();
     }
 }
 

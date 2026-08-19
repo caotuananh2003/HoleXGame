@@ -64,6 +64,12 @@ public class GameWinPopup : UIWindow
     // Unity lifecycle
     // =========================================================================
 
+    public override void Open()
+    {
+        base.Open();
+        UIManager?.PlaySFX(AudioID.SFX.UiWin);
+    }
+
     private void Start()
     {
         if (resumeButton   != null) resumeButton.onClick.AddListener(OnResumeClicked);

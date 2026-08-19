@@ -157,7 +157,8 @@ public class GameplayController : MonoBehaviour
         gameManager.ChangeState(GameState.Result);
         holeController.SetInputEnabled(false);
         gameTimer.StopTimer();
-        levelManager.CleanupLevel();
+        // KHÔNG cleanup level ở đây — player có thể revive và tiếp tục chơi
+        // Chỉ cleanup khi thực sự quit hoặc win
     }
 
     //public async UniTaskVoid RestartAsync()

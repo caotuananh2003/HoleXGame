@@ -10,7 +10,8 @@ using UnityEngine;
 /// </summary>
 public class GameTimer : MonoBehaviour
 {
-    [SerializeField] private float totalTime = 120f;
+    //[SerializeField] private float totalTime = 120f;
+    private float totalTime;
 
     private float remaining;
     private bool running;

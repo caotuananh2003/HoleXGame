@@ -21,6 +21,8 @@ public class GameplayLifetimeScope : LifetimeScope
         builder.RegisterComponentInHierarchy<GameplayPanel>();
 
         // ── Popups có [Inject] ────────────────────────────────────────────────
+        // SettingPopup: inject AudioManager (mở từ GameplayPanel)
+        builder.RegisterComponentInHierarchy<SettingPopup>();
         // GameOverTimeUpPopup: inject GameTimer, HoleController, SceneManagerService, GameManager, SaveManager
         builder.RegisterComponentInHierarchy<GameOverTimeUpPopup>();
         builder.RegisterComponentInHierarchy<GameTimer>();

@@ -76,10 +76,10 @@ public class SettingPopup : UIWindow
     // UIWindow — sync UI khi popup được mở / bật lại
     // =========================================================================
 
-    // OnEnable chạy mỗi khi SetActive(true) — đảm bảo toggle luôn phản ánh
-    // trạng thái hiện tại khi popup xuất hiện, kể cả khi mở lại lần 2 trở đi.
-    private void OnEnable()
+    public override void Open()
     {
+        base.Open();
+        UIManager?.PlaySFX(AudioID.SFX.UiPopup);
         SyncToggles();
     }
 

@@ -2,9 +2,13 @@ using UnityEngine;
 
 /// <summary>
 /// Effect chặn bomb explosion — khi active, swallow bomb không trigger game over.
-/// Spawn runtime MonoBehaviour (BombShieldEffect) để track active state.
-/// BombShieldEffect tự destroy sau duration.
-/// SwallowHandler sẽ check BombShieldEffect.IsActive trước khi trigger game over.
+///
+/// Yêu cầu setup trong scene:
+///   Player/Visuals/ShieldVisual (inactive mặc định)
+///   └── có component BombShieldEffect gắn sẵn
+///
+/// ApplyEffect() chỉ tìm component đã có và gọi Initialize() / ExtendDuration().
+/// Không dùng AddComponent — tránh tạo/destroy GameObject động.
 /// </summary>
 [CreateAssetMenu(fileName = "BombShieldEffect", menuName = "Items/Effects/Bomb Shield Effect")]
 public class BombShieldEffectDefinition : ItemEffectDefinition
@@ -13,27 +17,38 @@ public class BombShieldEffectDefinition : ItemEffectDefinition
     [Tooltip("Thời gian shield hiệu lực (giây).")]
     [SerializeField] private float duration = 15f;
 
-    public override void ApplyEffect(ItemEffectContext context)
+    public override ITimedEffect ApplyEffect(ItemEffectContext context)
     {
-        if (context.holeTransform == null)
+        if (context.holeController == null)
         {
-            Debug.LogWarning("[BombShieldEffect] holeTransform is null — cannot apply effect.");
-            return;
+            Debug.LogWarning("[BombShieldEffect] holeController is null — cannot apply effect.");
+            return null;
         }
 
-        // Nếu đã có BombShieldEffect active, extend duration thay vì stack
-        BombShieldEffect existingShield = context.holeTransform.GetComponent<BombShieldEffect>();
-        if (existingShield != null)
+        HoleSizeController sizeController = context.holeController.GetComponent<HoleSizeController>();
+        if (sizeController == null)
         {
-            existingShield.ExtendDuration(duration);
+            Debug.LogWarning("[BombShieldEffect] HoleSizeController not found on HoleController.");
+        }
+
+        BombShieldEffect shield = context.holeController.GetComponentInChildren<BombShieldEffect>(true);
+        if (shield == null)
+        {
+            Debug.LogError("[BombShieldEffect] Không tìm thấy BombShieldEffect trong children của Player. " +
+                           "Hãy gắn ShieldVisual (có component BombShieldEffect) làm child của Player và đặt inactive.");
+            return null;
+        }
+
+        // Nếu đang active thì extend, không initialize lại — timer vẫn đang chạy
+        if (BombShieldEffect.IsActive)
+        {
+            shield.ExtendDuration(duration);
             Debug.Log($"[BombShieldEffect] Extended duration by {duration}s.");
-            return;
+            return shield; // Trả về instance đang active để ItemSlotUI cập nhật timer
         }
 
-        // Spawn runtime component
-        BombShieldEffect shieldEffect = context.holeTransform.gameObject.AddComponent<BombShieldEffect>();
-        shieldEffect.Initialize(duration);
-
+        shield.Initialize(duration, sizeController);
         Debug.Log($"[BombShieldEffect] Applied — duration={duration}s.");
+        return shield; // Timed effect — trả về ITimedEffect để ItemSlotUI track timer
     }
 }

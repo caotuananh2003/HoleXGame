@@ -10,6 +10,9 @@ using System;
 [Serializable]
 public class ProfileData
 {
+    /// <summary>Tên hiển thị của người chơi.</summary>
+    public string playerName = "Player";
+
     /// <summary>ID của Avatar đang được chọn.</summary>
     public string selectedAvatarId = "";
 
@@ -27,6 +30,7 @@ public class ProfileData
     {
         return new ProfileData
         {
+            playerName       = playerName,
             selectedAvatarId = selectedAvatarId,
             selectedFrameId  = selectedFrameId,
             selectedBadgeId  = selectedBadgeId,
@@ -42,6 +46,7 @@ public class ProfileData
 
         return selectedAvatarId == other.selectedAvatarId
             && selectedFrameId  == other.selectedFrameId
-            && selectedBadgeId  == other.selectedBadgeId;
+            && selectedBadgeId  == other.selectedBadgeId
+            && playerName       == other.playerName;
     }
 }

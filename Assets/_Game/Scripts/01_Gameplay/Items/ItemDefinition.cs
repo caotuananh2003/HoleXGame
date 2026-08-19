@@ -32,8 +32,13 @@ public class ItemDefinition : ScriptableObject
     [SerializeField] private string description;
 
     [Header("Unlock & Quantity")]
-    [Tooltip("Item đã được unlock chưa? Nếu false → không thể sử dụng.")]
-    [SerializeField] private bool isLocked = true;
+    [Tooltip("Item khóa mặc định? Nếu true → cần vượt qua đủ số màn (unlockAtLevel) mới dùng được.")]
+    [SerializeField] private bool isLockedByDefault = true;
+
+    [Tooltip("Số màn chơi tối thiểu player phải đã vượt qua để unlock item này.\n" +
+             "0 = unlock ngay từ đầu.\n" +
+             "Ví dụ: 3 = player phải WIN ít nhất 3 màn (currentLevelIndex >= 3) mới dùng được.")]
+    [SerializeField] private int unlockAtLevel = 0;
 
     [Tooltip("Số lượng mặc định khi khởi tạo player mới. Không phải runtime quantity.")]
     [SerializeField] private int defaultAmount = 3;
@@ -48,9 +53,20 @@ public class ItemDefinition : ScriptableObject
     public string ItemName => itemName;
     public Sprite Icon => icon;
     public string Description => description;
-    public bool IsLocked => isLocked;
+    /// <summary>
+    /// Item có bị khóa mặc định không? Dùng để check lần đầu — runtime unlock state
+    /// được quản lý bởi ItemManager (dựa trên hole level đạt UnlockAtLevel).
+    /// </summary>
+    public bool IsLockedByDefault => isLockedByDefault;
+    /// <summary>
+    /// Số màn chơi tối thiểu player phải đã vượt qua (currentLevelIndex) để unlock item.
+    /// 0 = unlock ngay từ đầu game.
+    /// </summary>
+    public int UnlockAtLevel => unlockAtLevel;
     public int DefaultAmount => defaultAmount;
     public ItemEffectDefinition[] Effects => effects;
+
+    // IsLocked đã bị bỏ — runtime lock state do ItemManager quyết định
 
     // ── Validation ────────────────────────────────────────────────────────────
 

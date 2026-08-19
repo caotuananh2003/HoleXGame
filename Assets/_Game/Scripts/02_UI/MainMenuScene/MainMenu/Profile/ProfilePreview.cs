@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,9 @@ public class ProfilePreview : MonoBehaviour
     [SerializeField] private Image avatarImage;
     [SerializeField] private Image frameImage;
     [SerializeField] private Image badgeImage;
+
+    [Header("Text")]
+    [SerializeField] private TMP_Text nameText;
 
     private AvatarDatabase avatarDatabase;
     private FrameDatabase frameDatabase;
@@ -43,6 +47,7 @@ public class ProfilePreview : MonoBehaviour
         SetAvatar(data.selectedAvatarId);
         SetFrame(data.selectedFrameId);
         SetBadge(data.selectedBadgeId);
+        SetName(data.playerName);
     }
 
     #region Update Preview
@@ -71,6 +76,14 @@ public class ProfilePreview : MonoBehaviour
 
         BadgeDefinition def = badgeDatabase != null ? badgeDatabase.GetById(badgeId) : null;
         badgeImage.sprite  = def != null ? def.Icon : null;
+    }
+
+    /// <summary>Cập nhật tên hiển thị — gọi khi người chơi nhập tên mới.</summary>
+    public void SetName(string name)
+    {
+        if (nameText == null) return;
+
+        nameText.text = string.IsNullOrWhiteSpace(name) ? "Player" : name;
     }
     #endregion
 

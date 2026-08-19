@@ -88,6 +88,7 @@ GameObject:
   - component: {fileID: 1639330985177128400}
   - component: {fileID: 5061516106471304908}
   - component: {fileID: 8782994687180655955}
+  - component: {fileID: -8100789783171800266}
   m_Layer: 5
   m_Name: BadgeItem
   m_TagString: Untagged
@@ -212,8 +213,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BadgeItemUI
   iconImage: {fileID: 1639330985177128400}
   selectedOverlay: {fileID: 1149467700202205300}
-  lockOverlay: {fileID: 7478719839548688997}
+  unlockedObject: {fileID: 0}
+  lockedObject: {fileID: 0}
   button: {fileID: 5061516106471304908}
+--- !u!114 &-8100789783171800266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6322871025740951497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17705561cef2cf241ac035dd69db507f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSFX
+  sfxId: sfx_ui_click
 --- !u!1 &7478719839548688997
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DG.Tweening.Core.Easing;
 using TMPro;
 using UnityEngine;
@@ -68,11 +69,86 @@ public class MainmenuPanel : UIWindow
             Debug.LogWarning("[MainmenuPanel] playerProfile is not assigned. ProfilePreview will not display correctly.");
         }
 
+        SeedDefaultProfileIfNeeded();
         RefreshPreview();
         //RefreshCurrency();
 
         if (bottomPanel == null)
             Debug.LogWarning("[MainmenuPanel] bottomPanel is not assigned in Inspector.");
+    }
+
+    /// <summary>
+    /// Khởi tạo profile mặc định nếu chưa có avatar/frame/badge (lần đầu chơi).
+    /// Gán giá trị đầu tiên từ database và save lại.
+    /// </summary>
+    private void SeedDefaultProfileIfNeeded()
+    {
+        if (saveManager?.PlayerData?.profile == null)
+        {
+            Debug.LogWarning("[MainmenuPanel] ProfileData is null — cannot seed default profile.");
+            return;
+        }
+
+        if (playerProfile == null)
+        {
+            Debug.LogWarning("[MainmenuPanel] playerProfile SO is not assigned — cannot seed default profile.");
+            return;
+        }
+
+        ProfileData profile = saveManager.PlayerData.profile;
+
+        // Chỉ seed khi cả 3 ID đều rỗng (lần đầu tiên chơi)
+        if (!string.IsNullOrEmpty(profile.selectedAvatarId) ||
+            !string.IsNullOrEmpty(profile.selectedFrameId)  ||
+            !string.IsNullOrEmpty(profile.selectedBadgeId))
+        {
+            return; // Đã có dữ liệu rồi, không cần seed
+        }
+
+        bool seeded = false;
+
+        // Seed Avatar
+        if (playerProfile.AvatarDatabase != null && playerProfile.AvatarDatabase.Avatars.Count > 0)
+        {
+            AvatarDefinition firstAvatar = playerProfile.AvatarDatabase.Avatars[0];
+            if (firstAvatar != null)
+            {
+                profile.selectedAvatarId = firstAvatar.Id;
+                seeded = true;
+                Debug.Log($"[MainmenuPanel] Seeded default avatar: {firstAvatar.Id}");
+            }
+        }
+
+        // Seed Frame
+        if (playerProfile.FrameDatabase != null && playerProfile.FrameDatabase.Frames.Count > 0)
+        {
+            FrameDefinition firstFrame = playerProfile.FrameDatabase.Frames[0];
+            if (firstFrame != null)
+            {
+                profile.selectedFrameId = firstFrame.Id;
+                seeded = true;
+                Debug.Log($"[MainmenuPanel] Seeded default frame: {firstFrame.Id}");
+            }
+        }
+
+        // Seed Badge
+        if (playerProfile.BadgeDatabase != null && playerProfile.BadgeDatabase.Badges.Count > 0)
+        {
+            BadgeDefinition firstBadge = playerProfile.BadgeDatabase.Badges[0];
+            if (firstBadge != null)
+            {
+                profile.selectedBadgeId = firstBadge.Id;
+                seeded = true;
+                Debug.Log($"[MainmenuPanel] Seeded default badge: {firstBadge.Id}");
+            }
+        }
+
+        // Save ngay sau khi seed
+        if (seeded)
+        {
+            saveManager.Save().Forget();
+            Debug.Log("[MainmenuPanel] Default profile seeded and saved.");
+        }
     }
 
     public void RefreshPreview() // Refresh preview theo dữ liệu hiện tại trong SaveManager.

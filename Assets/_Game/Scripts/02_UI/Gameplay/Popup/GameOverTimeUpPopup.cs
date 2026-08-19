@@ -42,6 +42,7 @@ public class GameOverTimeUpPopup : UIWindow
     private SceneManagerService sceneManagerService;
     private GameManager         gameManager;
     private SaveManager         saveManager;
+    private LevelManager        levelManager;
 
     [Inject]
     private void Construct(
@@ -49,13 +50,15 @@ public class GameOverTimeUpPopup : UIWindow
         HoleController      holeController,
         SceneManagerService sceneManagerService,
         GameManager         gameManager,
-        SaveManager         saveManager)
+        SaveManager         saveManager,
+        LevelManager        levelManager)
     {
         this.gameTimer           = gameTimer;
         this.holeController      = holeController;
         this.sceneManagerService = sceneManagerService;
         this.gameManager         = gameManager;
         this.saveManager         = saveManager;
+        this.levelManager        = levelManager;
     }
 
     // ── Runtime state ─────────────────────────────────────────────────────────
@@ -88,6 +91,7 @@ public class GameOverTimeUpPopup : UIWindow
     public override void Open()
     {
         base.Open();
+        UIManager?.PlaySFX(AudioID.SFX.UiLose);
         RefreshUI();
     }
 
@@ -124,7 +128,11 @@ public class GameOverTimeUpPopup : UIWindow
 
     private void OnQuitClicked()
     {
-        Debug.Log("[GameOverTimeUpPopup] Quit — trừ 1 life, về MainMenu.");
+        Debug.Log("[GameOverTimeUpPopup] Quit — cleanup level, về MainMenu.");
+
+        // Cleanup level trước khi chuyển scene
+        levelManager?.CleanupLevel();
+
         gameManager?.ChangeState(GameState.Loading);
         sceneManagerService?.LoadScene(mainMenuScene).Forget();
     }

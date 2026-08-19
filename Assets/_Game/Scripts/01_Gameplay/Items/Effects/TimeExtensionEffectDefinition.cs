@@ -12,16 +12,17 @@ public class TimeExtensionEffectDefinition : ItemEffectDefinition
     [Tooltip("Số giây cộng thêm vào timer. Ví dụ: 30 = +30s.")]
     [SerializeField] private float additionalTime = 30f;
 
-    public override void ApplyEffect(ItemEffectContext context)
+    public override ITimedEffect ApplyEffect(ItemEffectContext context)
     {
         if (context.gameTimer == null)
         {
             Debug.LogWarning("[TimeExtensionEffect] GameTimer is null — cannot apply effect.");
-            return;
+            return null;
         }
 
         context.gameTimer.AddTime(additionalTime);
 
         Debug.Log($"[TimeExtensionEffect] Applied — added {additionalTime}s to timer.");
+        return null; // Instant effect — không có duration
     }
 }

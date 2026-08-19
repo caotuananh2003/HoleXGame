@@ -21,19 +21,28 @@ public class GameOverBombPopup : UIWindow
     // ── Dependencies ──────────────────────────────────────────────────────────
     private SceneManagerService sceneManagerService;
     private GameManager         gameManager;
+    private LevelManager        levelManager;
 
     [Inject]
     private void Construct(
         SceneManagerService sceneManagerService,
-        GameManager         gameManager)
+        GameManager         gameManager,
+        LevelManager        levelManager)
     {
         this.sceneManagerService = sceneManagerService;
         this.gameManager         = gameManager;
+        this.levelManager        = levelManager;
     }
 
     // =========================================================================
     // Unity lifecycle
     // =========================================================================
+
+    public override void Open()
+    {
+        base.Open();
+        UIManager?.PlaySFX(AudioID.SFX.UiLose);
+    }
 
     private void Start()
     {
@@ -56,7 +65,11 @@ public class GameOverBombPopup : UIWindow
 
     private void OnQuitClicked()
     {
-        Debug.Log("[GameOverBombPopup] Quit — về MainMenu.");
+        Debug.Log("[GameOverBombPopup] Quit — cleanup level, về MainMenu.");
+
+        // Cleanup level trước khi chuyển scene
+        levelManager?.CleanupLevel();
+
         gameManager?.ChangeState(GameState.Loading);
         sceneManagerService?.LoadScene(mainMenuScene).Forget();
     }

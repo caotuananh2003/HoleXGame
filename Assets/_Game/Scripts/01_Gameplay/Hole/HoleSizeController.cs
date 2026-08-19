@@ -41,7 +41,8 @@ public class HoleSizeController : MonoBehaviour
     private Ease            growEase;
 
     // ── Runtime state ──────────────────────────────────────────────────────────
-    public float Radius { get; private set; }
+    public float Radius       { get; private set; }
+    public float GrowDuration { get; private set; }
 
     private bool isGrowing;
     private bool isInitialized;
@@ -74,6 +75,8 @@ public class HoleSizeController : MonoBehaviour
         this.colliderHalfSize  = colliderHalfSize;
         this.growDuration      = growDuration;
         this.growEase          = growEase;
+
+        GrowDuration = growDuration;
 
         isInitialized = true;
 

@@ -54,6 +54,14 @@ public class HoleMovement : MonoBehaviour
             SetArrowVisible(false);
     }
 
+    /// <summary>
+    /// Cập nhật speed runtime. Gọi từ HoleController khi hole grow.
+    /// </summary>
+    public void SetSpeed(float newSpeed)
+    {
+        speed = newSpeed;
+    }
+
     /// <summary>Gọi khi người dùng nhả tay.</summary>
     public void OnInputReleased()
     {

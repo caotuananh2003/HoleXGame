@@ -32,7 +32,7 @@ public class SwallowHandler : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.transform.position.y >= 0f) return;
+        if (other.transform.position.y >= -0.1f) return;
 
         if (other.gameObject.layer == Swallowable)
         {

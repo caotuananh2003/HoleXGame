@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f984e3a4c81c2b24e97d1ecdb9c581b2, type: 3}
+  m_Name: LevelDefinition_03
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Gameplay.LevelDefinition
+  levelIndex: 3
+  levelName: Level3
+  levelPrefab: {fileID: 4213043930493073475, guid: 9eaef63fbcb10074e87e61147e5355e9, type: 3}
+  timeLimit: 120
+  currencyReward: 100
+  levelObjectives:
+  - obstacleDefinition: {fileID: 11400000, guid: 5567f82748ec9f74087259690a6d42e2, type: 2}
+    requiredCount: 9
+  - obstacleDefinition: {fileID: 11400000, guid: e75d5f87aeae51c44987d670620d6828, type: 2}
+    requiredCount: 5
+  - obstacleDefinition: {fileID: 11400000, guid: 02aeffe5603de004f877e0b222d3258d, type: 2}
+    requiredCount: 5
+  - obstacleDefinition: {fileID: 11400000, guid: 59921b7307582f14b88e5e7cd3d5a5a9, type: 2}
+    requiredCount: 5
+  - obstacleDefinition: {fileID: 11400000, guid: 5c67ec6e05d58aa4b89e02740951477d, type: 2}
+    requiredCount: 5
+  - obstacleDefinition: {fileID: 11400000, guid: f83d8edc15b139b49b98944f538793b4, type: 2}
+    requiredCount: 5
+  - obstacleDefinition: {fileID: 11400000, guid: 9e9ec1cf60e448b4ba3a6bd25c0b73a5, type: 2}
+    requiredCount: 5

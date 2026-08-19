@@ -21,27 +21,20 @@ public class RankPanel : UIWindow
     [SerializeField] private GameObject _playerContent;
     [SerializeField] private GameObject _clanContent;
 
+    private bool _buttonRegistered = false;
     private void Start()
     {
+        RegisterButtons();
         ValidateInspectorRefs(); // Log ra đảm bảo không có SerializeField Object bị null
+        ShowTab(activeTab);
     }
 
     private void OnEnable()
     {
-        RegisterButtons();
-        //RegisterInfoPanelEvents(); // Làm phần này sau
-        ShowTab(activeTab);
-    }
-
-    private void OnDisable()
-    {
-        // Hủy đăng ký info panel events khi panel tắt để tránh callback rác
-        //UnregisterInfoPanelEvents(); // Làm phần này sau khi hoàn thiện hàm RegisterInfoPanelEvents();
-    }
-
-    private void OnDestroy()
-    {
-        //UnregisterInfoPanelEvents(); // Làm phần này sau khi hoàn thiện hàm RegisterInfoPanelEvents();
+        if (_buttonRegistered)
+        {
+            ShowTab(activeTab);
+        }
     }
 
     private void RegisterButtons()
@@ -49,6 +42,7 @@ public class RankPanel : UIWindow
         _weeklyTabButton?.Initialize(OnWeeklyTabClicked);
         _playerTabButton?.Initialize(OnPlayerTabClicked);
         _clanTabButton?.Initialize(OnClanTabClicked);
+        _buttonRegistered = true;
     }
 
     private void OnWeeklyTabClicked() => ShowTab(RankTab.Weekly);
@@ -57,10 +51,16 @@ public class RankPanel : UIWindow
 
     private void ShowTab(RankTab tab)
     {
+        activeTab = tab;
         _playerContent.SetActive(tab == RankTab.Player);
         _clanContent.SetActive(tab == RankTab.Clan);
         _weeklyContent.SetActive(tab == RankTab.Weekly);
+
+        _playerTabButton?.SetSelected(tab == RankTab.Player);
+        _clanTabButton?.SetSelected(tab == RankTab.Clan);
+        _weeklyTabButton?.SetSelected(tab == RankTab.Weekly);
     }
+
     // Hàm kiểm tra xem đã kéo ref đủ trong inspector chưa
     private void ValidateInspectorRefs()
     {

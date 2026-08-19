@@ -22,32 +22,26 @@ public class ClanPanel : UIWindow {
 
     private void Start()
     {
-        ValidateInspectorRefs(); // Log ra đảm bảo không có SerializeField Object bị null
+        RegisterButtons();      // Đăng ký listener đúng 1 lần duy nhất
+        ValidateInspectorRefs();
+        ShowTab(activeTab);     // Hiện tab mặc định
     }
 
     private void OnEnable()
     {
-        RegisterButtons();
-        //RegisterInfoPanelEvents(); // Làm phần này sau
-        ShowTab(activeTab);
+        // Chỉ ShowTab nếu Start() đã chạy rồi (tránh gọi trước khi buttons được register)
+        if (_buttonsRegistered)
+            ShowTab(activeTab);
     }
 
-    private void OnDisable()
-    {
-        // Hủy đăng ký info panel events khi panel tắt để tránh callback rác
-        //UnregisterInfoPanelEvents(); // Làm phần này sau khi hoàn thiện hàm RegisterInfoPanelEvents();
-    }
-
-    private void OnDestroy()
-    {
-        //UnregisterInfoPanelEvents(); // Làm phần này sau khi hoàn thiện hàm RegisterInfoPanelEvents();
-    }
+    private bool _buttonsRegistered = false;
 
     private void RegisterButtons()
     {
         _joinTabButton?.Initialize(OnJoinTabClicked);
         _findTabButton?.Initialize(OnFindTabClicked);
         _createTabButton?.Initialize(OnCreateTabClicked);
+        _buttonsRegistered = true;
     }
 
     private void OnJoinTabClicked() => ShowTab(ClanTab.Join);
@@ -56,9 +50,15 @@ public class ClanPanel : UIWindow {
 
     private void ShowTab(ClanTab tab)
     {
-        _findContent.SetActive(tab == ClanTab.Find);
-        _createContent.SetActive(tab == ClanTab.Create);
-        _joinContent.SetActive(tab == ClanTab.Join);
+        activeTab = tab;
+
+        if (_joinContent   != null) _joinContent.SetActive(tab == ClanTab.Join);
+        if (_findContent   != null) _findContent.SetActive(tab == ClanTab.Find);
+        if (_createContent != null) _createContent.SetActive(tab == ClanTab.Create);
+
+        _joinTabButton?.SetSelected(tab == ClanTab.Join);
+        _findTabButton?.SetSelected(tab == ClanTab.Find);
+        _createTabButton?.SetSelected(tab == ClanTab.Create);
     }
     // Hàm kiểm tra xem đã kéo ref đủ trong inspector chưa
     private void ValidateInspectorRefs()

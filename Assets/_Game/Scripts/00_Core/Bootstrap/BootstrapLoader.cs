@@ -6,7 +6,7 @@ public class BootstrapLoader : MonoBehaviour
     [Header("Scene Names (phải khớp với tên file .unity, không có extension)")]
     //[SerializeField] private string gameplayScene = "Gameplay";
     [SerializeField] private string MainMenuScene = "MainMenuScene"; // File: MainMenuScene.unity
-    [SerializeField] private const string MainMenuBGMId = "bgm_music";
+    private const string MainMenuBGMId = AudioID.BGM.Music;
 
     private SaveManager saveManager;
     private AudioManager audioManager;

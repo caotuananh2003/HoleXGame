@@ -69,13 +69,16 @@ public class TouchJoystickInput : MonoBehaviour
 
     private void HandleTouch(Touchscreen touch)
     {
+        
         if (touch.primaryTouch.press.wasPressedThisFrame)
             BeginDrag(touch.primaryTouch.position.ReadValue());
         else if (touch.primaryTouch.press.isPressed)
             UpdateDrag(touch.primaryTouch.position.ReadValue());
 
         if (touch.primaryTouch.press.wasReleasedThisFrame)
+        {
             EndDrag();
+        }
     }
 
     private void HandleMouse(Mouse mouse)
@@ -143,6 +146,7 @@ public class TouchJoystickInput : MonoBehaviour
 
     private void EndDrag()
     {
+        Debug.Log("EndDrag");
         WasReleasedThisFrame = true;
         ResetInput();
         HideJoystick();
@@ -160,6 +164,7 @@ public class TouchJoystickInput : MonoBehaviour
 
     private void HideJoystick()
     {
+        Debug.Log("HideJoystickk");
         if (joystickRoot != null)
             joystickRoot.gameObject.SetActive(false);
     }

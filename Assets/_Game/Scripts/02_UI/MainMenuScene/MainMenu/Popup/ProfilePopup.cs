@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -7,6 +8,9 @@ public class ProfilePopup : UIWindow
     [Header("Navigation")]
     [SerializeField] private Button closeButton;
     [SerializeField] private Button editButton;
+
+    [Header("Name")]
+    [SerializeField] private TMP_Text nameText;
 
     [Header("Preview")]
     [SerializeField] private ProfilePreview profilePreview; // ChildObject
@@ -20,6 +24,12 @@ public class ProfilePopup : UIWindow
     private void Construct(SaveManager saveManager)
     {
         this.saveManager = saveManager;
+    }
+
+    public override void Open()
+    {
+        base.Open();
+        UIManager?.PlaySFX(AudioID.SFX.UiPopup);
     }
 
     private void OnEnable() // UIWindow — sync preview mỗi lần popup mở
@@ -48,7 +58,11 @@ public class ProfilePopup : UIWindow
             return;
         }
 
-        profilePreview?.Refresh(saveManager.PlayerData.profile);
+        ProfileData profile = saveManager.PlayerData.profile;
+        profilePreview?.Refresh(profile);
+
+        if (nameText != null)
+            nameText.text = string.IsNullOrWhiteSpace(profile.playerName) ? "Player" : profile.playerName;
     }
 
     private void OnCloseClicked()
@@ -77,6 +91,7 @@ public class ProfilePopup : UIWindow
     {
         if (closeButton    == null) Debug.LogWarning("[ProfilePopup] closeButton is not assigned.");
         if (editButton     == null) Debug.LogWarning("[ProfilePopup] editButton is not assigned.");
+        if (nameText       == null) Debug.LogWarning("[ProfilePopup] nameText is not assigned.");
         if (profilePreview == null) Debug.LogWarning("[ProfilePopup] profilePreview is not assigned.");
         if (playerProfile  == null) Debug.LogWarning("[ProfilePopup] playerProfile is not assigned.");
     }

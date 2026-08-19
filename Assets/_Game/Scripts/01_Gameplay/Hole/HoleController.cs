@@ -42,16 +42,21 @@ public class HoleController : MonoBehaviour
 
     // ── HoleMovement config ───────────────────────────────────────────────────
     [Header("Hole Movement")]
-    [SerializeField] private float           speed             = 3f;
+    [Tooltip("Vận tốc di chuyển ban đầu.")]
+    [SerializeField] private float initialSpeed    = 2f;
+
+    [Tooltip("Lượng vận tốc tăng thêm mỗi lần hole grow.")]
+    [SerializeField] private float speedPerGrow    = 1f;
     // directionArrow và fakeGround dùng chung với HoleSizeController
 
     private FloatingScorePool floatingScorePool;
 
     // ── Grow milestones ───────────────────────────────────────────────────────
     // Fibonacci-like: mỗi milestone vượt qua trigger 1 lần GrowHole.
-    private static readonly int[] GrowMilestones = { 20, 40, 60, 100, 160, 260, 420, 680, 1100, 1780 };
+    private static readonly int[] GrowMilestones = { 20, 60, 120, 200, 300, 420, 560, 720, 900, 1100 };
 
     // ── Runtime ───────────────────────────────────────────────────────────────
+    private float              currentSpeed;
     private HoleMovement       holeMovement;
     private HoleSizeController holeSizeController;
     private SwallowHandler     swallowHandler;
@@ -60,6 +65,13 @@ public class HoleController : MonoBehaviour
     private int nextMilestoneIndex;
 
     public int Score => score;
+
+    /// <summary>
+    /// Level hiện tại của hole (bắt đầu từ 1).
+    /// Level tăng khi vượt milestone (score-based) hoặc khi dùng IncreaseSizeItem.
+    /// ItemManager subscribe OnLevelUp để check unlock items.
+    /// </summary>
+    public int CurrentLevel => nextMilestoneIndex + 1;
 
     /// <summary>
     /// Fire mỗi khi score thay đổi.
@@ -83,9 +95,11 @@ public class HoleController : MonoBehaviour
         holeMovement       = GetComponent<HoleMovement>();
         holeSizeController = GetComponent<HoleSizeController>();
         swallowHandler     = GetComponentInChildren<SwallowHandler>();
-        floatingScorePool = FindAnyObjectByType<FloatingScorePool>();
+        floatingScorePool  = FindAnyObjectByType<FloatingScorePool>();
 
-        holeMovement.Init(speed, directionArrow, fakeGround);
+        currentSpeed = initialSpeed;
+
+        holeMovement.Init(currentSpeed, directionArrow, fakeGround);
 
         holeSizeController.Init(
             holeCollider,
@@ -102,6 +116,7 @@ public class HoleController : MonoBehaviour
     private void Start()
     {
         holeSizeController.OnScoreAdded += HandleScoreAdded;
+        holeSizeController.OnGrown      += HandleGrown;
 
         if (swallowHandler != null)
             swallowHandler.OnObjectSwallowed += HandleSwallowedForFloatingText;
@@ -135,6 +150,26 @@ public class HoleController : MonoBehaviour
         holeMovement?.OnInputReleased();
     }
 
+    /// <summary>
+    /// Grow hole thủ công (từ item). Fire OnLevelUp để UI cập nhật.
+    /// Không ảnh hưởng đến score hay milestone tracking.
+    /// </summary>
+    public void GrowHoleManually()
+    {
+        if (holeSizeController == null) return;
+
+        holeSizeController.GrowHole();
+
+        // Tăng level hiển thị (không dựa vào milestone)
+        int currentLevel = nextMilestoneIndex + 1;
+        OnLevelUp?.Invoke(currentLevel + 1);
+
+        // Update progress bar (giữ nguyên progress, chỉ tăng level)
+        FireProgressChanged();
+
+        Debug.Log($"[HoleController] Manually grew hole. New display level: {currentLevel + 1}");
+    }
+
     // =========================================================================
     // Internal
     // =========================================================================
@@ -144,6 +179,18 @@ public class HoleController : MonoBehaviour
         score += amount;
         CheckGrowMilestones();
         FireProgressChanged();
+    }
+
+    /// <summary>
+    /// Callback từ HoleSizeController.OnGrown.
+    /// Tăng speed thêm speedPerGrow mỗi lần hole grow.
+    /// </summary>
+    private void HandleGrown(float newRadius)
+    {
+        currentSpeed += speedPerGrow;
+        holeMovement?.SetSpeed(currentSpeed);
+
+        Debug.Log($"[HoleController] Speed increased to {currentSpeed} (radius={newRadius:F2}).");
     }
 
     private void CheckGrowMilestones()
@@ -197,7 +244,10 @@ public class HoleController : MonoBehaviour
     private void OnDestroy()
     {
         if (holeSizeController != null)
+        {
             holeSizeController.OnScoreAdded -= HandleScoreAdded;
+            holeSizeController.OnGrown      -= HandleGrown;
+        }
 
         if (swallowHandler != null)
             swallowHandler.OnObjectSwallowed -= HandleSwallowedForFloatingText;

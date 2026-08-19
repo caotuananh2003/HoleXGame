@@ -12,6 +12,7 @@ public class BottomPanel : UIWindow
     [SerializeField] private ContentNavigator contentNavigator;
     [SerializeField] private List<TabButton> tabs;
     [SerializeField] private int defaultTabIndex = 2;
+    [SerializeField] private BottomTabLayoutAdjuster layoutAdjuster;
 
     private int currentTabIndex = -1;
 
@@ -57,6 +58,7 @@ public class BottomPanel : UIWindow
 
         currentTabIndex = index;
         contentNavigator.NavigateTo(index);
+        layoutAdjuster?.NotifyTabSelected(index);
     }
 
     /// <summary>
