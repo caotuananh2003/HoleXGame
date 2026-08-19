@@ -316,6 +316,11 @@ public abstract class UIWindow : MonoBehaviour
     public bool IsOpen { get; private set; }
     public UIManager UIManager { get; private set; }
 
+    /// <summary>
+    /// Cho phép subclass (PopupWindow) cập nhật IsOpen mà không gọi SetActive.
+    /// </summary>
+    protected void SetIsOpen(bool value) => IsOpen = value;
+
     public virtual void Initialize(UIManager uiManager)
     {
         UIManager = uiManager;

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
 
-public class EditProfilePopup : UIWindow
+public class EditProfilePopup : PopupWindow
 {
     private enum ProfileTab { Avatar, Frame, Badge }
     private ProfileTab activeTab = ProfileTab.Avatar;

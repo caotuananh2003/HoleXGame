@@ -15,7 +15,7 @@ using UnityEngine.UI;
 ///   - enableObject  : hiện khi đã từng click vào InputField (có thể confirm)
 ///   - disableObject : hiện khi chưa click vào InputField lần nào (mặc định)
 /// </summary>
-public class EditNamePopup : UIWindow
+public class EditNamePopup : PopupWindow
 {
     [Header("Navigation")]
     [SerializeField] private Button closeButton;

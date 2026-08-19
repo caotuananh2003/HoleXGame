@@ -13,7 +13,7 @@ using VContainer;
 ///
 /// Gọi Setup(currencyReward) từ GameplayController trước hoặc sau Open().
 /// </summary>
-public class GameWinPopup : UIWindow
+public class GameWinPopup : PopupWindow
 {
     [Header("Buttons")]
     [SerializeField] private Button   resumeButton;

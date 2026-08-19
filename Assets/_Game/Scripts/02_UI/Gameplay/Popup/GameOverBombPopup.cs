@@ -10,7 +10,7 @@ using VContainer;
 /// Không có cơ chế hồi sinh — bomb explosion là kết thúc tức thì.
 /// Người chơi chỉ có thể Quit về MainMenu.
 /// </summary>
-public class GameOverBombPopup : UIWindow
+public class GameOverBombPopup : PopupWindow
 {
     [Header("Quit")]
     [SerializeField] private Button quitButton;

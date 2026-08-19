@@ -244,16 +244,16 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6964537211890246594}
+  - {fileID: 1597310739715715005}
   - {fileID: 435650051255868871}
   - {fileID: 7171539666795606271}
   - {fileID: 8585947081955995395}
-  - {fileID: 1597310739715715005}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 600, y: 800}
+  m_SizeDelta: {x: 270, y: 376}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &8287543765497939808
 MonoBehaviour:
@@ -330,7 +330,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17705561cef2cf241ac035dd69db507f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonSFX
-  sfxId: sfx_ui_click
 --- !u!1 &3555486246539206794
 GameObject:
   m_ObjectHideFlags: 0
@@ -441,7 +440,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: 30}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8504225024189682686
 CanvasRenderer:
@@ -471,7 +470,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 919f134549271a3449c550867f3d4786, type: 2}
+  m_Sprite: {fileID: 21300000, guid: e15410ed0c76c0446974c08d878b2ae6, type: 2}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

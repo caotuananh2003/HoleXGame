@@ -9,7 +9,7 @@ using VContainer;
 /// Khi mở: Toggle đọc trạng thái hiện tại từ AudioManager.
 /// Khi Toggle thay đổi: cập nhật AudioManager (tự lưu qua SaveManager).
 /// </summary>
-public class SettingPopup : UIWindow
+public class SettingPopup : PopupWindow
 {
     // -------------------------------------------------------------------------
     // Navigation

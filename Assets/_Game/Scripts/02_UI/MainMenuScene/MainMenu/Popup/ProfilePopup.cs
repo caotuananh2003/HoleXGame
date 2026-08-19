@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
 
-public class ProfilePopup : UIWindow
+public class ProfilePopup : PopupWindow
 {
     [Header("Navigation")]
     [SerializeField] private Button closeButton;

@@ -15,7 +15,7 @@ using VContainer;
 ///
 /// Khi Quit: trừ 1 life → về MainMenuScene.
 /// </summary>
-public class GameOverTimeUpPopup : UIWindow
+public class GameOverTimeUpPopup : PopupWindow
 {
     private const int   MaxRevives         = 3;
     private const float AddSeconds         = 20f;

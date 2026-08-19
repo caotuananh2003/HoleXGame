@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /// Hiện tại: mở / đóng popup.
 /// Có thể mở rộng sau: gọi Purchase(), RestorePurchase() thông qua IAP service.
 /// </summary>
-public class RemoveAdsPopup : UIWindow
+public class RemoveAdsPopup : PopupWindow
 {
     // -------------------------------------------------------------------------
     // Navigation

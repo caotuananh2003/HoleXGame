@@ -5,7 +5,7 @@ using UnityEngine.UI;
 /// Popup xem ads để nhận thêm mạng — Mode = Popup trong Inspector.
 /// Mở bằng UIManager.Open<LifePopup>() từ MainmenuPanel.
 /// </summary>
-public class LifePopup : UIWindow
+public class LifePopup : PopupWindow
 {
     [Header("Navigation")]
     [SerializeField] private Button closeButton;

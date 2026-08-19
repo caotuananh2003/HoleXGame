@@ -1813,6 +1813,7 @@ RectTransform:
   - {fileID: 635803501}
   - {fileID: 1747147548}
   - {fileID: 1361127937}
+  - {fileID: 563547126}
   - {fileID: 93608300}
   m_Father: {fileID: 1407253849}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2370,6 +2371,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RemoveAdsPopup
   mode: 2
+  openDuration: 0.25
+  closeDuration: 0.18
+  startScale: 0.7
+  openEase: 27
+  closeEase: 26
   closeButton: {fileID: 573535440}
 --- !u!1 &62230048
 GameObject:
@@ -16099,6 +16105,64 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 562902160}
   m_CullTransparentMesh: 1
+--- !u!1 &563547125
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 563547126}
+  - component: {fileID: 563547127}
+  m_Layer: 5
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &563547126
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563547125}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 47065985}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 600, y: 600}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!95 &563547127
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563547125}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 2065b3a8b854c1a49a65a8bb04f421f2, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &573535438
 GameObject:
   m_ObjectHideFlags: 0
@@ -21260,6 +21324,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProfilePopup
   mode: 2
+  openDuration: 0.25
+  closeDuration: 0.18
+  startScale: 0.7
+  openEase: 27
+  closeEase: 26
   closeButton: {fileID: 1417377087}
   editButton: {fileID: 1239176724}
   nameText: {fileID: 95339985}
@@ -23392,6 +23461,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LifePopup
   mode: 2
+  openDuration: 0.25
+  closeDuration: 0.18
+  startScale: 0.7
+  openEase: 27
+  closeEase: 26
   closeButton: {fileID: 2057601041}
 --- !u!1 &832087283
 GameObject:
@@ -28234,6 +28308,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EditNamePopup
   mode: 2
+  openDuration: 0.25
+  closeDuration: 0.18
+  startScale: 0.7
+  openEase: 27
+  closeEase: 26
   closeButton: {fileID: 1790592592}
   nameInputField: {fileID: 1889434177}
   continueButton: {fileID: 262793173}
@@ -32430,6 +32509,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EditProfilePopup
   mode: 2
+  openDuration: 0.25
+  closeDuration: 0.18
+  startScale: 0.7
+  openEase: 27
+  closeEase: 26
   closeButton: {fileID: 757718534}
   nameText: {fileID: 172039729}
   editNameButton: {fileID: 1816082110}
@@ -61218,6 +61302,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SettingPopup
   mode: 2
+  openDuration: 0.25
+  closeDuration: 0.18
+  startScale: 0.7
+  openEase: 27
+  closeEase: 26
   closeButton: {fileID: 8209410831205618580}
   musicToggle: {fileID: 2779946616964631551}
   soundToggle: {fileID: 672067762411442207}
