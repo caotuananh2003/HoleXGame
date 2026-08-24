@@ -5,15 +5,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
 
-/// <summary>
-/// Panel chính của MainMenu.
-/// Gắn vào MainmenuPanel GameObject trong ContentPanel.
-/// - playButton      → chuyển sang GameplayScene
-/// - profileButton   → mở ProfilePopup
-/// - settingButton   → mở SettingPopup
-/// - removeAdsButton → mở RemoveAdsPopup
-/// Wire tất cả trong Inspector.
-/// </summary>
 public class MainmenuPanel : UIWindow
 {
     [Header("Navigation")]
@@ -43,6 +34,7 @@ public class MainmenuPanel : UIWindow
         this.saveManager = saveManager;
     }
 
+    #region Life Cycle
     private void OnEnable()
     {
         RefreshCurrency();
@@ -50,127 +42,36 @@ public class MainmenuPanel : UIWindow
 
     private void Start()
     {
-        Register(playButton, OnPlayClicked);
-        Register(profileButton, OnProfileClicked);
-        Register(settingButton, OnSettingClicked);
-        Register(removeAdsButton, OnRemoveAdsClicked);
-        Register(currencyButton, OnCurrencyClicked);
-        Register(livesButton, OnLivesClicked);
+        Validate();
+     
+        playButton.onClick.AddListener(OnPlayClicked);
+        profileButton.onClick.AddListener(OnProfileClicked);
+        settingButton.onClick.AddListener(OnSettingClicked);
+        removeAdsButton.onClick.AddListener(OnRemoveAdsClicked);
+        currencyButton.onClick.AddListener(OnCurrencyClicked);
+        livesButton.onClick.AddListener(OnLivesClicked);
 
-        if (playerProfile != null)
-        {
-            profilePreview?.Init(
+        profilePreview?.Init(
                 playerProfile.AvatarDatabase,
                 playerProfile.FrameDatabase,
                 playerProfile.BadgeDatabase);
-        }
-        else
-        {
-            Debug.LogWarning("[MainmenuPanel] playerProfile is not assigned. ProfilePreview will not display correctly.");
-        }
 
-        SeedDefaultProfileIfNeeded();
+        SpawnDefaultProfile();
         RefreshPreview();
-        //RefreshCurrency();
-
-        if (bottomPanel == null)
-            Debug.LogWarning("[MainmenuPanel] bottomPanel is not assigned in Inspector.");
     }
 
-    /// <summary>
-    /// Khởi tạo profile mặc định nếu chưa có avatar/frame/badge (lần đầu chơi).
-    /// Gán giá trị đầu tiên từ database và save lại.
-    /// </summary>
-    private void SeedDefaultProfileIfNeeded()
+    private void OnDestroy()
     {
-        if (saveManager?.PlayerData?.profile == null)
-        {
-            Debug.LogWarning("[MainmenuPanel] ProfileData is null — cannot seed default profile.");
-            return;
-        }
-
-        if (playerProfile == null)
-        {
-            Debug.LogWarning("[MainmenuPanel] playerProfile SO is not assigned — cannot seed default profile.");
-            return;
-        }
-
-        ProfileData profile = saveManager.PlayerData.profile;
-
-        // Chỉ seed khi cả 3 ID đều rỗng (lần đầu tiên chơi)
-        if (!string.IsNullOrEmpty(profile.selectedAvatarId) ||
-            !string.IsNullOrEmpty(profile.selectedFrameId)  ||
-            !string.IsNullOrEmpty(profile.selectedBadgeId))
-        {
-            return; // Đã có dữ liệu rồi, không cần seed
-        }
-
-        bool seeded = false;
-
-        // Seed Avatar
-        if (playerProfile.AvatarDatabase != null && playerProfile.AvatarDatabase.Avatars.Count > 0)
-        {
-            AvatarDefinition firstAvatar = playerProfile.AvatarDatabase.Avatars[0];
-            if (firstAvatar != null)
-            {
-                profile.selectedAvatarId = firstAvatar.Id;
-                seeded = true;
-                Debug.Log($"[MainmenuPanel] Seeded default avatar: {firstAvatar.Id}");
-            }
-        }
-
-        // Seed Frame
-        if (playerProfile.FrameDatabase != null && playerProfile.FrameDatabase.Frames.Count > 0)
-        {
-            FrameDefinition firstFrame = playerProfile.FrameDatabase.Frames[0];
-            if (firstFrame != null)
-            {
-                profile.selectedFrameId = firstFrame.Id;
-                seeded = true;
-                Debug.Log($"[MainmenuPanel] Seeded default frame: {firstFrame.Id}");
-            }
-        }
-
-        // Seed Badge
-        if (playerProfile.BadgeDatabase != null && playerProfile.BadgeDatabase.Badges.Count > 0)
-        {
-            BadgeDefinition firstBadge = playerProfile.BadgeDatabase.Badges[0];
-            if (firstBadge != null)
-            {
-                profile.selectedBadgeId = firstBadge.Id;
-                seeded = true;
-                Debug.Log($"[MainmenuPanel] Seeded default badge: {firstBadge.Id}");
-            }
-        }
-
-        // Save ngay sau khi seed
-        if (seeded)
-        {
-            saveManager.Save().Forget();
-            Debug.Log("[MainmenuPanel] Default profile seeded and saved.");
-        }
+        playButton.onClick.RemoveListener(OnPlayClicked);
+        profileButton.onClick.RemoveListener(OnProfileClicked);
+        settingButton.onClick.RemoveListener(OnSettingClicked);
+        removeAdsButton.onClick.RemoveListener(OnRemoveAdsClicked);
+        currencyButton.onClick.RemoveListener(OnCurrencyClicked);
+        livesButton.onClick.RemoveListener(OnLivesClicked);
     }
+    #endregion
 
-    public void RefreshPreview() // Refresh preview theo dữ liệu hiện tại trong SaveManager.
-    {
-        if (saveManager?.PlayerData == null)
-        {
-            Debug.LogWarning("[ProfilePopup] SaveManager.Data is null. Cannot refresh preview.");
-            return;
-        }
-
-        profilePreview?.Refresh(saveManager.PlayerData.profile);
-    }
-
-    /// <summary>Cập nhật text currency button theo dữ liệu hiện tại trong SaveManager.</summary>
-    private void RefreshCurrency()
-    {
-        if (saveManager?.PlayerData == null) return;
-        if (currencyText      == null) return;
-
-        currencyText.text = saveManager.PlayerData.currency.ToString();
-    }
-
+    #region OnClick method
     private void OnPlayClicked()
     {
         navigator?.GoToGameplay();
@@ -178,41 +79,17 @@ public class MainmenuPanel : UIWindow
 
     private void OnProfileClicked()
     {
-        if (UIManager != null)
-        {
-            Debug.Log("OnProfileClicked");
-            UIManager.Open<ProfilePopup>();
-        } else
-        {
-            Debug.Log("UIManager is null");
-        }
+        UIManager.Open<ProfilePopup>();
     }
 
     private void OnSettingClicked()
     {
-        if (UIManager != null)
-        {
-
-            Debug.Log("OnSettingClicked");
-            UIManager.Open<SettingPopup>();
-        }
-        else
-        {
-            Debug.Log("UIManager is null");
-        }
+        UIManager.Open<SettingPopup>();
     }
 
     private void OnRemoveAdsClicked()
     {
-        if (UIManager != null)
-        {
-            Debug.Log("OnRemoveAdsClicked");
-            UIManager.Open<RemoveAdsPopup>();
-        }
-        else
-        {
-            Debug.Log("UIManager is null");
-        }
+        UIManager.Open<RemoveAdsPopup>();
     }
 
     private void OnCurrencyClicked()
@@ -224,27 +101,99 @@ public class MainmenuPanel : UIWindow
     {
         UIManager?.Open<LifePopup>();
     }
+    #endregion
 
+    #region private method
 
-    private void OnDestroy()
+    private void SpawnDefaultProfile() // Khởi tạo profile mặc định. Gán giá trị đầu tiên từ database và save lại.
     {
-        Unregister(playButton, OnPlayClicked);
-        Unregister(profileButton, OnProfileClicked);
-        Unregister(settingButton, OnSettingClicked);
-        Unregister(removeAdsButton, OnRemoveAdsClicked);
-        Unregister(currencyButton, OnCurrencyClicked);
-        Unregister(livesButton, OnLivesClicked);
+        ProfileData profile = saveManager.PlayerData.profileData;
+
+        // Chỉ seed khi cả 3 ID đều rỗng (lần đầu tiên chơi)
+        if (!string.IsNullOrEmpty(profile.selectedAvatarId) ||
+            !string.IsNullOrEmpty(profile.selectedFrameId) ||
+            !string.IsNullOrEmpty(profile.selectedBadgeId))
+        {
+            return; // Đã có dữ liệu rồi, không cần seed
+        }
+
+        if (playerProfile.AvatarDatabase != null && playerProfile.AvatarDatabase.Avatars.Count > 0) // Seed Avatar
+        {
+            AvatarDefinition firstAvatar = playerProfile.AvatarDatabase.Avatars[0];
+            if (firstAvatar != null)
+            {
+                profile.selectedAvatarId = firstAvatar.Id;
+                Debug.Log($"[MainmenuPanel] Seeded default avatar: {firstAvatar.Id}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Cannot spawn avatar");
+        }
+
+        if (playerProfile.FrameDatabase != null && playerProfile.FrameDatabase.Frames.Count > 0) // Seed Frame
+        {
+            FrameDefinition firstFrame = playerProfile.FrameDatabase.Frames[0];
+            if (firstFrame != null)
+            {
+                profile.selectedFrameId = firstFrame.Id;
+                Debug.Log($"[MainmenuPanel] Seeded default frame: {firstFrame.Id}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Cannot spawn frame");
+        }
+
+        if (playerProfile.BadgeDatabase != null && playerProfile.BadgeDatabase.Badges.Count > 0) // Seed Badge
+        {
+            BadgeDefinition firstBadge = playerProfile.BadgeDatabase.Badges[0];
+            if (firstBadge != null)
+            {
+                profile.selectedBadgeId = firstBadge.Id;
+                Debug.Log($"[MainmenuPanel] Seeded default badge: {firstBadge.Id}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Cannot spawn badge");
+        }
+
+        // Save ngay sau khi seed
+        saveManager.Save().Forget();
+        Debug.Log("[MainmenuPanel] Default profile seeded and saved.");
     }
 
-    // -------------------------------------------------------------------------
-
-    private static void Register(Button btn, UnityEngine.Events.UnityAction action)
+    public void RefreshPreview() // Refresh preview theo dữ liệu hiện tại trong SaveManager.
     {
-        if (btn != null) btn.onClick.AddListener(action);
+        profilePreview.Refresh(saveManager.PlayerData.profileData);
     }
 
-    private static void Unregister(Button btn, UnityEngine.Events.UnityAction action)
+    private void RefreshCurrency() // Cập nhật text currency button theo dữ liệu hiện tại trong SaveManager.
     {
-        if (btn != null) btn.onClick.RemoveListener(action);
+        currencyText.text = saveManager.PlayerData.currency.ToString();
+    }
+
+    #endregion
+
+
+    private void Validate()
+    {
+        if (UIManager == null)                              Debug.LogError("[MainmenuPanel] UIManager is NULL.", this);
+        if (playButton == null)                             Debug.LogError("[MainmenuPanel] playButton is NULL.", this);
+        if (bottomPanel == null)                            Debug.LogError("[MainmenuPanel] bottomPanel is NULL.", this);
+        if (navigator == null)                              Debug.LogError("[MainmenuPanel] navigator is NULL. Check VContainer registration/injection.", this);
+        if (profileButton == null)                          Debug.LogError("[MainmenuPanel] profileButton is NULL.", this);
+        if (settingButton == null)                          Debug.LogError("[MainmenuPanel] settingButton is NULL.", this);
+        if (removeAdsButton == null)                        Debug.LogError("[MainmenuPanel] removeAdsButton is NULL.", this);
+        if (profilePreview == null)                         Debug.LogError("[MainmenuPanel] profilePreview is NULL.", this);
+        if (currencyButton == null)                         Debug.LogError("[MainmenuPanel] currencyButton is NULL.", this);
+        if (currencyText == null)                           Debug.LogError("[MainmenuPanel] currencyText is NULL.", this);
+        if (livesButton == null)                            Debug.LogError("[MainmenuPanel] livesButton is NULL.", this);
+        if (playerProfile == null)                          Debug.LogError("[MainmenuPanel] playerProfile is NULL. Assign PlayerProfile ScriptableObject in Inspector.", this);
+        if (saveManager == null)                            Debug.LogError("[MainmenuPanel] saveManager is NULL. Check VContainer registration/injection.", this);
+        if (saveManager == null)                            Debug.LogError("[MainmenuPanel] saveManager is null.");
+        if (saveManager?.PlayerData == null)                Debug.LogError("[MainmenuPanel] saveManager.PlayerData is null.");
+        if (saveManager?.PlayerData?.profileData == null)   Debug.LogError("[MainmenuPanel] saveManager.PlayerData.profileData is null.");
     }
 }

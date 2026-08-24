@@ -9,8 +9,6 @@ using UnityEngine;
 /// </summary>
 public class GameplayHUD : UIWindow
 {
-
-
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI timerText;
@@ -66,10 +64,6 @@ public class GameplayHUD : UIWindow
         int seconds = Mathf.FloorToInt(remaining - minutes * 60f);
         timerText.text = $"{minutes:0}:{seconds:00}";
     }
-
-    // ── Private ───────────────────────────────────────────────────────────────
-
-
 
     private void OnDestroy()
     {

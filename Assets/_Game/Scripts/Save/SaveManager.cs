@@ -11,15 +11,9 @@ using UnityEngine;
 [Serializable]
 public class PlayerData
 {
-    // ── Audio ────────────────────────────────────────────────────────────────
     public float bgmVolume = 1f;
     public float sfxVolume = 1f;
 
-    // ── Gameplay stats ────────────────────────────────────────────────────────
-    public int highscore;
-    public int medals;
-
-    // ── Level Progress ────────────────────────────────────────────────────────
     /// <summary>
     /// Index level hiện tại của player (0-based).
     /// Tăng lên 1 mỗi khi qua màn, dùng mod % để quay vòng.
@@ -27,12 +21,11 @@ public class PlayerData
     /// </summary>
     public int currentLevelIndex = -1;
 
-    // ── Profile ───────────────────────────────────────────────────────────────
     /// <summary>
     /// Dữ liệu profile người chơi: avatar, frame, badge được chọn.
     /// JsonUtility serialize nested class đúng khi class đó có [Serializable].
     /// </summary>
-    public ProfileData profile = new ProfileData();
+    public ProfileData profileData = new ProfileData();
 
     // ── Shop — item đang trang bị ─────────────────────────────────────────────
     /// <summary>ID của HoleSkin đang trang bị. Rỗng = dùng default.</summary>
@@ -192,8 +185,8 @@ public class SaveManager : MonoBehaviour
             PlayerData loadedData = JsonUtility.FromJson<PlayerData>(json);
 
             // Đảm bảo profile không null sau khi load save cũ.
-            if (loadedData != null && loadedData.profile == null)
-                loadedData.profile = new ProfileData();
+            if (loadedData != null && loadedData.profileData == null)
+                loadedData.profileData = new ProfileData();
 
             // Deserialize List → Dictionary
             if (loadedData != null)
@@ -218,10 +211,8 @@ public class SaveManager : MonoBehaviour
         {
             bgmVolume        = 1f,
             sfxVolume        = 1f,
-            highscore        = 0,
-            medals           = 0,
             currentLevelIndex = -1,
-            profile          = new ProfileData(),
+            profileData          = new ProfileData(),
             currency         = 5000,
             lives            = 10,
         };

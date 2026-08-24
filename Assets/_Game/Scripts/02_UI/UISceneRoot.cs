@@ -4,6 +4,7 @@ using VContainer;
 /// <summary>
 /// Gắn vào root Canvas của mỗi scene.
 /// Đăng ký scene với UIManager khi load, hủy đăng ký khi unload.
+/// Báo hiệu SceneManagerService khi scene đã sẵn sàng (LoadingOverlay có thể ẩn).
 ///
 /// Persistent windows (BottomPanel, TopBar, HUD...):
 ///   - Tự mở trong Awake/Start của chính chúng, hoặc bật sẵn trong hierarchy.
@@ -16,11 +17,13 @@ using VContainer;
 public class UISceneRoot : MonoBehaviour
 {
     private UIManager uiManager;
+    private SceneManagerService sceneManagerService;
 
     [Inject]
-    private void Construct(UIManager uiManager)
+    private void Construct(UIManager uiManager, SceneManagerService sceneManagerService)
     {
-        this.uiManager = uiManager;
+        this.uiManager            = uiManager;
+        this.sceneManagerService  = sceneManagerService;
     }
 
     private void Start()
@@ -32,6 +35,9 @@ public class UISceneRoot : MonoBehaviour
         }
 
         uiManager.RegisterSceneUI(transform);
+
+        // Scene đã init xong — LoadingOverlay có thể bắt đầu ẩn
+        sceneManagerService?.NotifySceneReady();
     }
 
     private void OnDestroy()

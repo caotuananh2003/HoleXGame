@@ -72,7 +72,6 @@ public abstract class PopupWindow : UIWindow
         transform.localScale = Vector3.one * startScale;
         canvasGroup.alpha    = 0f;
 
-        // SetActive(true) + IsOpen = true
         base.Open();
 
         currentSequence = DOTween.Sequence()
@@ -91,8 +90,6 @@ public abstract class PopupWindow : UIWindow
 
         currentSequence?.Kill(false);
         currentSequence = null;
-
-        SetIsOpen(false);
 
         int closeGen = generation;
 

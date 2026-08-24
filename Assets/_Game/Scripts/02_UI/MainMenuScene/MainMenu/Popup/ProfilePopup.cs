@@ -58,7 +58,7 @@ public class ProfilePopup : PopupWindow
             return;
         }
 
-        ProfileData profile = saveManager.PlayerData.profile;
+        ProfileData profile = saveManager.PlayerData.profileData;
         profilePreview?.Refresh(profile);
 
         if (nameText != null)

@@ -53,8 +53,11 @@ public class GameOverBombPopup : PopupWindow
             Debug.LogWarning("[GameOverBombPopup] quitButton is not assigned.");
     }
 
+    
     private void OnDestroy()
     {
+        base.OnDestroy();
+
         if (quitButton != null)
             quitButton.onClick.RemoveListener(OnQuitClicked);
     }

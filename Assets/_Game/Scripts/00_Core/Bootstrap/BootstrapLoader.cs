@@ -37,7 +37,7 @@ public class BootstrapLoader : MonoBehaviour
 
         audioManager.Initialize();
 
-        uiManager.Initialize();
+        //uiManager.Initialize();
 
         gameManager.ChangeState(GameState.Loading);
 

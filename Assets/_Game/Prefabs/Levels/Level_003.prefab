@@ -13968,7 +13968,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2223635969009560438}
-  - component: {fileID: 6532831357656962739}
   m_Layer: 9
   m_Name: Obstacles
   m_TagString: Untagged
@@ -14004,20 +14003,6 @@ Transform:
   - {fileID: 7362160097493924464}
   m_Father: {fileID: 1128240405033701337}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6532831357656962739
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3063380494856814097}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 60e464c898b36d24db2e8971f32ec7af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ObstacleCounter
-  countText: {fileID: 0}
-  progressFill: {fileID: 0}
 --- !u!1 &3072754770686316878
 GameObject:
   m_ObjectHideFlags: 0

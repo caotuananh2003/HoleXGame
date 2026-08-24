@@ -173,6 +173,17 @@ public class GameplayController : MonoBehaviour
     //    await sceneManagerService.LoadScene(mainMenuScene);
     //}
 
+#if UNITY_EDITOR
+    /// <summary>
+    /// Cheat win — chỉ dùng trong Editor, gọi từ EditorCheatController [N].
+    /// Bỏ qua objective, mở thẳng GameWinPopup.
+    /// </summary>
+    public void CheatWin()
+    {
+        OnLevelWin();
+    }
+#endif
+
     private void OnDestroy()
     {
         if (gameTimer != null)

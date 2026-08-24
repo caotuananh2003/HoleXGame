@@ -1,6 +1,7 @@
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
 using VContainer;
 
 /// <summary>
@@ -25,6 +26,13 @@ public class GameplayPanel : UIWindow
     [SerializeField] private Transform gameItemsContainer;  // GameplayCanvas/GameplayPanel/GameItems
     [SerializeField] private ItemSlotUI itemSlotPrefab;     // Prefab có ItemSlotUI component
     [SerializeField] private ItemDatabase itemDatabase;     // SO chứa danh sách ItemDefinition
+    [Header("UI")]
+    [SerializeField] private TextMeshProUGUI scoreText;
+    [SerializeField] private TextMeshProUGUI timerText;
+
+    private HoleSizeController holeSizeController;
+    private HoleController holeController;
+    private GameTimer gameTimer;
 
     // Runtime — các slot được spawn động
     private readonly List<ItemSlotUI> spawnedSlots = new List<ItemSlotUI>();
@@ -41,12 +49,58 @@ public class GameplayPanel : UIWindow
         this.itemManager              = itemManager;
     }
 
+    private void Awake()
+    {
+        holeSizeController = FindAnyObjectByType<HoleSizeController>();
+        holeController = FindAnyObjectByType<HoleController>();
+        gameTimer = FindAnyObjectByType<GameTimer>();
+    }
     private void Start()
     {
         if (settingButton != null)
             settingButton.onClick.AddListener(OnSettingClicked);
 
         InitializeItemSlots();
+
+        if (gameTimer != null)
+        {
+            gameTimer.OnTick += OnTick;
+        }
+
+        if (holeSizeController != null)
+        {
+            holeSizeController.OnScoreAdded += OnScoreAdded;
+        }
+
+        UpdateScore(0);
+    }
+
+    private void OnScoreAdded(int delta) // Khi holeSizeController fire OnScoreAdded (của chính nó) thì sẽ gọi hàm này
+    {
+        // Lấy tổng điểm từ HoleController
+        if (holeController != null)
+            UpdateScore(holeController.Score);
+    }
+
+    private void UpdateScore(int score)
+    {
+        if (scoreText != null)
+            scoreText.text = score.ToString();
+    }
+
+    private void OnTick(float remaining)
+    {
+        if (timerText == null) return;
+
+        if (remaining <= 0f)
+        {
+            timerText.text = "00:00";
+            return;
+        }
+
+        int minutes = Mathf.FloorToInt(remaining / 60f);
+        int seconds = Mathf.FloorToInt(remaining - minutes * 60f);
+        timerText.text = $"{minutes:0}:{seconds:00}";
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -285,5 +339,11 @@ public class GameplayPanel : UIWindow
             itemManager.OnItemUseFailed -= OnItemUseFailedHandler;
             itemManager.OnItemUnlocked  -= OnItemUnlockedHandler;
         }
+
+        if (gameTimer != null)
+            gameTimer.OnTick -= OnTick;
+
+        if (holeSizeController != null)
+            holeSizeController.OnScoreAdded -= OnScoreAdded;
     }
 }

@@ -107,7 +107,7 @@ public class EditProfilePopup : PopupWindow
     {
         if (saveManager == null || playerProfile == null) return;
 
-        savedSnapshot = saveManager.PlayerData.profile.Clone();
+        savedSnapshot = saveManager.PlayerData.profileData.Clone();
         editingData   = savedSnapshot.Clone();
 
         ShowTab(ProfileTab.Avatar);
@@ -274,10 +274,10 @@ public class EditProfilePopup : PopupWindow
             return;
         }
 
-        saveManager.PlayerData.profile.selectedAvatarId = editingData.selectedAvatarId;
-        saveManager.PlayerData.profile.selectedFrameId  = editingData.selectedFrameId;
-        saveManager.PlayerData.profile.selectedBadgeId  = editingData.selectedBadgeId;
-        saveManager.PlayerData.profile.playerName       = editingData.playerName;
+        saveManager.PlayerData.profileData.selectedAvatarId = editingData.selectedAvatarId;
+        saveManager.PlayerData.profileData.selectedFrameId  = editingData.selectedFrameId;
+        saveManager.PlayerData.profileData.selectedBadgeId  = editingData.selectedBadgeId;
+        saveManager.PlayerData.profileData.playerName       = editingData.playerName;
 
         saveManager.Save().Forget();
 
@@ -354,21 +354,26 @@ public class EditProfilePopup : PopupWindow
 
     private void ValidateInspectorRefs()
     {
-        if (closeButton      == null) Debug.LogWarning("[EditProfilePopup] closeButton is not assigned.");
-        if (saveButton       == null) Debug.LogWarning("[EditProfilePopup] saveButton is not assigned.");
-        if (nameText         == null) Debug.LogWarning("[EditProfilePopup] nameText is not assigned.");
-        if (editNameButton   == null) Debug.LogWarning("[EditProfilePopup] editNameButton is not assigned.");
-        if (profilePreview   == null) Debug.LogWarning("[EditProfilePopup] profilePreview is not assigned.");
-        if (_avatarTabButton == null) Debug.LogWarning("[EditProfilePopup] avatarTabButton is not assigned.");
-        if (_frameTabButton  == null) Debug.LogWarning("[EditProfilePopup] frameTabButton is not assigned.");
-        if (_badgeTabButton  == null) Debug.LogWarning("[EditProfilePopup] badgeTabButton is not assigned.");
-        if (avatarContent    == null) Debug.LogWarning("[EditProfilePopup] avatarContent is not assigned.");
-        if (frameContent     == null) Debug.LogWarning("[EditProfilePopup] frameContent is not assigned.");
-        if (badgeContent     == null) Debug.LogWarning("[EditProfilePopup] badgeContent is not assigned.");
-        if (avatarItemPrefab == null) Debug.LogWarning("[EditProfilePopup] avatarItemPrefab is not assigned.");
-        if (frameItemPrefab  == null) Debug.LogWarning("[EditProfilePopup] frameItemPrefab is not assigned.");
-        if (badgeItemPrefab  == null) Debug.LogWarning("[EditProfilePopup] badgeItemPrefab is not assigned.");
-        if (playerProfile    == null) Debug.LogWarning("[EditProfilePopup] playerProfile is not assigned.");
-        if (scrollRect       == null) Debug.LogWarning("[EditProfilePopup] scrollRect is not assigned.");
+        // Inspector refs
+        if (closeButton      == null) Debug.LogError("[EditProfilePopup] closeButton is not assigned.",      this);
+        if (saveButton       == null) Debug.LogError("[EditProfilePopup] saveButton is not assigned.",       this);
+        if (nameText         == null) Debug.LogError("[EditProfilePopup] nameText is not assigned.",         this);
+        if (editNameButton   == null) Debug.LogError("[EditProfilePopup] editNameButton is not assigned.",   this);
+        if (profilePreview   == null) Debug.LogError("[EditProfilePopup] profilePreview is not assigned.",   this);
+        if (_avatarTabButton == null) Debug.LogError("[EditProfilePopup] avatarTabButton is not assigned.",  this);
+        if (_frameTabButton  == null) Debug.LogError("[EditProfilePopup] frameTabButton is not assigned.",   this);
+        if (_badgeTabButton  == null) Debug.LogError("[EditProfilePopup] badgeTabButton is not assigned.",   this);
+        if (avatarContent    == null) Debug.LogError("[EditProfilePopup] avatarContent is not assigned.",    this);
+        if (frameContent     == null) Debug.LogError("[EditProfilePopup] frameContent is not assigned.",     this);
+        if (badgeContent     == null) Debug.LogError("[EditProfilePopup] badgeContent is not assigned.",     this);
+        if (avatarItemPrefab == null) Debug.LogError("[EditProfilePopup] avatarItemPrefab is not assigned.", this);
+        if (frameItemPrefab  == null) Debug.LogError("[EditProfilePopup] frameItemPrefab is not assigned.",  this);
+        if (badgeItemPrefab  == null) Debug.LogError("[EditProfilePopup] badgeItemPrefab is not assigned.",  this);
+        if (playerProfile    == null) Debug.LogError("[EditProfilePopup] playerProfile is not assigned.",    this);
+        if (scrollRect       == null) Debug.LogError("[EditProfilePopup] scrollRect is not assigned.",       this);
+
+        // Injected dependencies
+        if (saveManager              == null) Debug.LogError("[EditProfilePopup] saveManager is null. Check VContainer registration.",   this);
+        if (saveManager?.PlayerData  == null) Debug.LogError("[EditProfilePopup] saveManager.PlayerData is null.",                       this);
     }
 }
