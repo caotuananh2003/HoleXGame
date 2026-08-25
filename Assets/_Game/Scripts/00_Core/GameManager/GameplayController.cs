@@ -161,11 +161,31 @@ public class GameplayController : MonoBehaviour
         // Chỉ cleanup khi thực sự quit hoặc win
     }
 
-    //public async UniTaskVoid RestartAsync()
-    //{
-    //    gameManager.ChangeState(GameState.Loading);
-    //    await sceneManagerService.LoadScene("Gameplay");
-    //}
+    /// <summary>
+    /// Hồi sinh player sau khi tốn 900 vàng.
+    /// Gọi từ GameOverBombPopup sau khi đã trừ currency.
+    /// Resume gameplay: bật input + tiếp tục timer với thời gian còn lại.
+    /// </summary>
+    public void RebornPlayer()
+    {
+        gameManager.ChangeState(GameState.Gameplay);
+        holeController.SetInputEnabled(true);
+        gameTimer.AddTime(0f); // resume timer với thời gian hiện tại, không reset
+
+        Debug.Log("[GameplayController] Player đã hồi sinh — gameplay tiếp tục.");
+    }
+
+    /// <summary>
+    /// Chơi lại level hiện tại từ đầu (không reborn — reset hoàn toàn).
+    /// Gọi từ TryAgainPopup.
+    /// </summary>
+    public async UniTaskVoid RestartLevelAsync()
+    {
+        gameManager.ChangeState(GameState.Loading);
+        await sceneManagerService.LoadScene("GameplayScene");
+
+        Debug.Log("[GameplayController] Restart level — reload GameplayScene.");
+    }
 
     //public async UniTaskVoid GoToMainMenuAsync()
     //{

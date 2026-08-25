@@ -30,6 +30,8 @@ public class GameplayLifetimeScope : LifetimeScope
         builder.RegisterComponentInHierarchy<GameOverBombPopup>();
         // GameWinPopup: inject SaveManager, SceneManagerService, GameManager
         builder.RegisterComponentInHierarchy<GameWinPopup>();
+        // TryAgainPopup: inject SceneManagerService, GameManager, LevelManager
+        builder.RegisterComponentInHierarchy<TryAgainPopup>();
 
         // ── Skin / Theme Appliers ─────────────────────────────────────────────
         // HoleSkinApplier: inject SaveManager
