@@ -19,10 +19,6 @@ public class ClockIndicator : MonoBehaviour
         SetUsed(false);
     }
 
-    /// <summary>
-    /// true  → enableIcon bật (lần hồi sinh này đã được dùng).
-    /// false → disableIcon bật (chưa dùng).
-    /// </summary>
     public void SetUsed(bool used)
     {
         if (enableIcon  != null) enableIcon.SetActive(used);

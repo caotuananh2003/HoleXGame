@@ -1,49 +1,33 @@
-﻿using UnityEngine;
-using VContainer;
+﻿using Cysharp.Threading.Tasks;
+using UnityEngine;
 
+/// <summary>
+/// Điểm khởi động duy nhất của game.
+/// Điều phối thứ tự init theo đúng thứ tự async:
+///   Boot → Load save → Init audio → Register UI → Show MainMenu → Play BGM
+/// </summary>
 public class BootstrapLoader : MonoBehaviour
 {
-    [Header("Scene Names (phải khớp với tên file .unity, không có extension)")]
-    //[SerializeField] private string gameplayScene = "Gameplay";
-    [SerializeField] private string MainMenuScene = "MainMenuScene"; // File: MainMenuScene.unity
     private const string MainMenuBGMId = AudioID.BGM.Music;
-
-    private SaveManager saveManager;
-    private AudioManager audioManager;
-    private UIManager uiManager;
-    private GameManager gameManager;
-    private SceneManagerService sceneManagerService;
-
-    [Inject]
-    private void Construct(
-        SaveManager saveManager,
-        AudioManager audioManager,
-        UIManager uiManager,
-        GameManager gameManager,
-        SceneManagerService sceneManagerService)
-    {
-        this.saveManager = saveManager;
-        this.audioManager = audioManager;
-        this.uiManager = uiManager;
-        this.gameManager = gameManager;
-        this.sceneManagerService = sceneManagerService;
-    }
 
     private async void Start()
     {
+        // Lấy Instance trong Start() để đảm bảo tất cả Awake() đã chạy xong
+        var gameManager       = GameManager.Instance;
+        var saveManager       = SaveManager.Instance;
+        var audioManager      = AudioManager.Instance;
+        var uiSceneRoot       = UISceneRoot.Instance;
+        var transitionService = TransitionService.Instance;
+
         gameManager.ChangeState(GameState.Boot);
 
-        await saveManager.Initialize();
+        await saveManager.Initialize();   // PlayerData phải có trước khi audio init
 
-        audioManager.Initialize();
+        audioManager.Initialize();        // đọc bgmVolume/sfxVolume từ PlayerData
 
-        //uiManager.Initialize();
+        uiSceneRoot.RegisterAll();        // đăng ký toàn bộ UIWindow với UIManager
 
-        gameManager.ChangeState(GameState.Loading);
-
-        await sceneManagerService.LoadScene(MainMenuScene);
-
-        gameManager.ChangeState(GameState.MainMenu);
+        transitionService.ShowMainMenuImmediate(); // hiện MainMenu, ẩn Gameplay
 
         audioManager.PlayBGM(MainMenuBGMId);
     }

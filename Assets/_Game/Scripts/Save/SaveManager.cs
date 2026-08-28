@@ -11,8 +11,9 @@ using UnityEngine;
 [Serializable]
 public class PlayerData
 {
-    public float bgmVolume = 1f;
-    public float sfxVolume = 1f;
+    public float bgmVolume          = 1f;
+    public float sfxVolume          = 1f;
+    public bool  isVibrationEnabled = true;
 
     /// <summary>
     /// Index level hiện tại của player (0-based).
@@ -113,6 +114,11 @@ public class PlayerData
 /// </summary>
 public class SaveManager : MonoBehaviour
 {
+    public static SaveManager Instance { get; private set; }
+
+    private void Awake()   { Instance = this; }
+    private void OnDestroy() { if (Instance == this) Instance = null; }
+
     private const string SaveKey = "HOLEXGAME_PLAYER_DATA";
 
     /// <summary>Dữ liệu đang được load. Null cho đến khi Initialize() hoàn tất.</summary>
@@ -209,12 +215,13 @@ public class SaveManager : MonoBehaviour
     {
         return new PlayerData
         {
-            bgmVolume        = 1f,
-            sfxVolume        = 1f,
-            currentLevelIndex = -1,
-            profileData          = new ProfileData(),
-            currency         = 5000,
-            lives            = 10,
+            bgmVolume           = 1f,
+            sfxVolume           = 1f,
+            isVibrationEnabled  = true,
+            currentLevelIndex   = -1,
+            profileData         = new ProfileData(),
+            currency            = 5000,
+            lives               = 10,
         };
     }
 }

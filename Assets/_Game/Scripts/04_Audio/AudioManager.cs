@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Audio;
-using VContainer;
 
 [Serializable]
 public class AudioClipEntry
@@ -14,9 +13,14 @@ public class AudioClipEntry
 
 public class AudioManager : MonoBehaviour
 {
+    public static AudioManager Instance { get; private set; }
+
+    private void Awake()     { Instance = this; }
+    private void OnDestroy() { if (Instance == this) Instance = null; }
+
     private const string BGMVolumeParameter = "BGMVolume";
     private const string SFXVolumeParameter = "SFXVolume";
-    private const float MutedDecibel = -80f;
+    private const float  MutedDecibel       = -80f;
 
     [Header("Mixer")]
     [SerializeField] private AudioMixer audioMixer;
@@ -26,40 +30,34 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource sfxSource;
 
     [Header("Database")]
-    [SerializeField] private AudioClipDatabase audioClipDatabase; // Scriptable Object Lưu các clip và id tương ứng.
+    [SerializeField] private AudioClipDatabase audioClipDatabase;
 
     private readonly Dictionary<string, AudioClip> clipsById = new();
-    private SaveManager saveManager;
     private string currentBgmId;
 
-    // Luu volume truoc khi mute de co the restore
     private float preMuteBGMVolume = 1f;
     private float preMuteSFXVolume = 1f;
 
-    public bool IsBGMMuted => saveManager?.PlayerData != null && saveManager.PlayerData.bgmVolume <= 0f; // Readonly, trả về BGM có mute hay không
-    public bool IsSFXMuted => saveManager?.PlayerData != null && saveManager.PlayerData.sfxVolume <= 0f; // Readonly, trả về SFX có mute hay không
-
-    [Inject]
-    private void Construct(SaveManager saveManager)
-    {
-        this.saveManager = saveManager;
-    }
+    public bool IsBGMMuted =>
+        SaveManager.Instance?.PlayerData != null && SaveManager.Instance.PlayerData.bgmVolume <= 0f;
+    public bool IsSFXMuted =>
+        SaveManager.Instance?.PlayerData != null && SaveManager.Instance.PlayerData.sfxVolume <= 0f;
+    public bool IsVibrationEnabled =>
+        SaveManager.Instance?.PlayerData == null || SaveManager.Instance.PlayerData.isVibrationEnabled;
 
     public void Initialize()
     {
-        //Debug.Log("AudioManager initialized.");
-        EnsureAudioSources(); // Tạo bgmSource và sfxSource nếu chưa gán trên Inspector (Mặc định không cần gán trên Inspector)
-        BuildClipCache(); // Tạo bộ dictionary với key = AudioClipEntry.id và value = AudioClipEntry.clip tương ứng.
+        EnsureAudioSources();
+        BuildClipCache();
 
-        if (saveManager?.PlayerData == null)
+        if (SaveManager.Instance?.PlayerData == null)
         {
             Debug.LogWarning("AudioManager initialized before SaveManager data was ready.");
             return;
         }
 
-        audioMixer.SetFloat(BGMVolumeParameter, LinearToDecibel(saveManager.PlayerData.bgmVolume)); // Tìm parameter có tên BGMVolumeParameter trong AudioMixer và đặt giá trị của nó thành giá trị mới.
-
-        audioMixer.SetFloat(SFXVolumeParameter, LinearToDecibel(saveManager.PlayerData.sfxVolume)); // Tìm parameter có tên SFXVolumeParameter trong AudioMixer và đặt giá trị của nó thành giá trị mới.
+        audioMixer.SetFloat(BGMVolumeParameter, LinearToDecibel(SaveManager.Instance.PlayerData.bgmVolume));
+        audioMixer.SetFloat(SFXVolumeParameter, LinearToDecibel(SaveManager.Instance.PlayerData.sfxVolume));
     }
 
     public void PlaySFX(string id)
@@ -70,49 +68,44 @@ public class AudioManager : MonoBehaviour
 
     public void PlayBGM(string id)
     {
-        if (!TryGetClip(id, out AudioClip clip))
-            return;
+        if (!TryGetClip(id, out AudioClip clip)) return;
+        if (currentBgmId == id && bgmSource.isPlaying) return;
 
-        if (currentBgmId == id && bgmSource.isPlaying)
-            return;
-
-        currentBgmId = id;
+        currentBgmId   = id;
         bgmSource.clip = clip;
         bgmSource.loop = true;
         bgmSource.Play();
     }
 
-    public void SetBGMVolume(float volume) // Set volume cho bgm và save lại
+    public void SetBGMVolume(float volume)
     {
-        float clampedVolume = Mathf.Clamp01(volume);
-        audioMixer.SetFloat(BGMVolumeParameter, LinearToDecibel(clampedVolume));
-
-        if (saveManager?.PlayerData != null)
+        float v = Mathf.Clamp01(volume);
+        audioMixer.SetFloat(BGMVolumeParameter, LinearToDecibel(v));
+        if (SaveManager.Instance?.PlayerData != null)
         {
-            saveManager.PlayerData.bgmVolume = clampedVolume;
-            saveManager.Save().Forget();
+            SaveManager.Instance.PlayerData.bgmVolume = v;
+            SaveManager.Instance.Save().Forget();
         }
     }
 
-    public void SetSFXVolume(float volume) // Set volume cho sfx và save lại
+    public void SetSFXVolume(float volume)
     {
-        float clampedVolume = Mathf.Clamp01(volume);
-        audioMixer.SetFloat(SFXVolumeParameter, LinearToDecibel(clampedVolume));
-
-        if (saveManager?.PlayerData != null)
+        float v = Mathf.Clamp01(volume);
+        audioMixer.SetFloat(SFXVolumeParameter, LinearToDecibel(v));
+        if (SaveManager.Instance?.PlayerData != null)
         {
-            saveManager.PlayerData.sfxVolume = clampedVolume;
-            saveManager.Save().Forget();
+            SaveManager.Instance.PlayerData.sfxVolume = v;
+            SaveManager.Instance.Save().Forget();
         }
     }
 
-    public void SetBGMMuted(bool mute) // Tat/bat BGM. Khi bat lai se restore ve volume truoc do.
+    public void SetBGMMuted(bool mute)
     {
         if (mute)
         {
-            if (saveManager?.PlayerData != null)
-                preMuteBGMVolume = saveManager.PlayerData.bgmVolume > 0f ? saveManager.PlayerData.bgmVolume : 1f;
-
+            if (SaveManager.Instance?.PlayerData != null)
+                preMuteBGMVolume = SaveManager.Instance.PlayerData.bgmVolume > 0f
+                    ? SaveManager.Instance.PlayerData.bgmVolume : 1f;
             SetBGMVolume(0f);
         }
         else
@@ -121,13 +114,13 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    public void SetSFXMuted(bool mute) // Tat/bat SFX. Khi bat lai se restore ve volume truoc do.
+    public void SetSFXMuted(bool mute)
     {
         if (mute)
         {
-            if (saveManager?.PlayerData != null)
-                preMuteSFXVolume = saveManager.PlayerData.sfxVolume > 0f ? saveManager.PlayerData.sfxVolume : 1f;
-
+            if (SaveManager.Instance?.PlayerData != null)
+                preMuteSFXVolume = SaveManager.Instance.PlayerData.sfxVolume > 0f
+                    ? SaveManager.Instance.PlayerData.sfxVolume : 1f;
             SetSFXVolume(0f);
         }
         else
@@ -136,58 +129,48 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    #region Helper
-    private void EnsureAudioSources() // Tạo AudioSource cho bgm và sfx (Trên Inspector không cần kéo ref gì cả)
+    public void SetVibration(bool enabled)
     {
-        if (bgmSource == null)
-        {
-            bgmSource = CreateAudioSource("BGM Source", true, "BGM");
-        }
+        if (SaveManager.Instance?.PlayerData == null) return;
+        SaveManager.Instance.PlayerData.isVibrationEnabled = enabled;
+        SaveManager.Instance.Save().Forget();
+    }
 
-        if (sfxSource == null)
-        {
-            sfxSource = CreateAudioSource("SFX Source", false, "SFX");
-        }
+    #region Helpers
+    private void EnsureAudioSources()
+    {
+        if (bgmSource == null) bgmSource = CreateAudioSource("BGM Source", true,  "BGM");
+        if (sfxSource == null) sfxSource = CreateAudioSource("SFX Source", false, "SFX");
     }
 
     private AudioSource CreateAudioSource(string sourceName, bool loop, string mixerGroupName = null)
     {
-        GameObject sourceObject = new(sourceName);
-        sourceObject.transform.SetParent(transform);
-
-        AudioSource source = sourceObject.AddComponent<AudioSource>();
+        var go     = new GameObject(sourceName);
+        go.transform.SetParent(transform);
+        var source = go.AddComponent<AudioSource>();
         source.playOnAwake = false;
-        source.loop = loop;
+        source.loop        = loop;
 
-        // Tu dong gan AudioMixerGroup neu audioMixer da duoc assign
         if (audioMixer != null && !string.IsNullOrEmpty(mixerGroupName))
         {
             AudioMixerGroup[] groups = audioMixer.FindMatchingGroups(mixerGroupName);
-            if (groups.Length > 0)
-                source.outputAudioMixerGroup = groups[0];
+            if (groups.Length > 0) source.outputAudioMixerGroup = groups[0];
         }
-
         return source;
     }
 
-    private void BuildClipCache() // Tạo bộ dictionary với key = AudioClipEntry.id và value = AudioClipEntry.clip tương ứng.
+    private void BuildClipCache()
     {
-        clipsById.Clear(); // Xóa sạch Dictionary
-
-        if (audioClipDatabase == null)
-            return;
-
-        // Tạo bộ Dictionary với key = id của clip và value = chính clip đó.
+        clipsById.Clear();
+        if (audioClipDatabase == null) return;
         foreach (AudioClipEntry entry in audioClipDatabase.Clips)
         {
-            if (entry == null || string.IsNullOrWhiteSpace(entry.id) || entry.clip == null)
-                continue;
-
+            if (entry == null || string.IsNullOrWhiteSpace(entry.id) || entry.clip == null) continue;
             clipsById[entry.id] = entry.clip;
         }
     }
 
-    private bool TryGetClip(string id, out AudioClip clip) // Thử lấy ra clip với id truyền vào xem trong dict có tồn tại hay không
+    private bool TryGetClip(string id, out AudioClip clip)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -195,21 +178,15 @@ public class AudioManager : MonoBehaviour
             Debug.LogWarning("Audio id is empty.");
             return false;
         }
-
-        if (clipsById.TryGetValue(id, out clip))
-            return true;
-
+        if (clipsById.TryGetValue(id, out clip)) return true;
         Debug.LogWarning($"Audio clip id '{id}' was not found.");
         return false;
     }
 
-    private static float LinearToDecibel(float linearVolume) // Chuyển giá trị từ 0 -> 1 thành -80Db (Không nghe thấy gì) tới 0Db (Âm thanh bình thường)
+    private static float LinearToDecibel(float v)
     {
-        if (linearVolume <= 0.0001f)
-            return MutedDecibel;
-
-        // AudioMixer nhan dB: 1 -> 0dB, 0.5 -> khoang -6dB, 0 -> -80dB.
-        return Mathf.Clamp(20f * Mathf.Log10(linearVolume), MutedDecibel, 0f);
+        if (v <= 0.0001f) return MutedDecibel;
+        return Mathf.Clamp(20f * Mathf.Log10(v), MutedDecibel, 0f);
     }
     #endregion
 }

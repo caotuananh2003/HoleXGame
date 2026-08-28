@@ -15,7 +15,15 @@ using UnityEngine;
 /// </summary>
 public class GameplayObjectiveManager : MonoBehaviour
 {
-    // Events
+    public static GameplayObjectiveManager Instance { get; private set; }
+
+    private void Awake()
+    {
+        Instance      = this;
+        swallowHandler = FindAnyObjectByType<SwallowHandler>();
+    }
+
+    private void OnDestroy() { if (Instance == this) Instance = null; }
     public event Action<LevelObjective> OnObjectiveUpdated;
     public event Action<LevelObjective> OnObjectiveCompleted;
     public event Action OnAllObjectivesCompleted;
@@ -23,15 +31,9 @@ public class GameplayObjectiveManager : MonoBehaviour
     private LevelDefinition currentLevelDefinition;
     private SwallowHandler swallowHandler;
 
-    // Runtime objectives tracking
     private List<LevelObjective> activeObjectives = new List<LevelObjective>();
 
     public bool IsAllCompleted => activeObjectives.All(obj => obj.IsCompleted);
-
-    private void Awake()
-    {
-        swallowHandler = FindAnyObjectByType<SwallowHandler>();
-    }
     /// <summary>
     /// Khởi tạo objectives cho level hiện tại.
     /// Gọi từ GameplayController khi bắt đầu level.

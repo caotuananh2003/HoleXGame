@@ -1,221 +1,181 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using VContainer;
 
 /// <summary>
-/// Điều phối flow của GameplayScene:
-///   LoadLevel → StartGameplay → GameOver → Restart / MainMenu.
-/// Gắn vào một ChildGameObject của GameplayContext.
+/// Điều phối flow Gameplay trong single-scene.
+/// StartLevel() gọi từ TransitionService, Cleanup() khi về MainMenu,
+/// RestartLevel() từ TryAgainPopup.
 /// </summary>
 public class GameplayController : MonoBehaviour
 {
+    public static GameplayController Instance { get; private set; }
 
-    [Header("Scene Names")]
-    [SerializeField] private string mainMenuScene = "MainMenuScene";
-
-    [Header("Level")]
-    [Tooltip("Index level dùng khi lần đầu chơi (chưa có save data).")]
-    [SerializeField] private int startLevelIndex = 0;
-
-    // ── Runtime state ─────────────────────────────────────────────────────────
-    private int currentLevelIndex;
-
-    #region Inject and auto ref
-    private GameManager                 gameManager;
-    private SaveManager                 saveManager;
-    private UIManager                   uiManager;
-    private SceneManagerService         sceneManagerService;
-    private LevelManager                levelManager;
-    private GameplayObjectiveManager    objectiveManager;
-
-    [Inject]
-    private void Construct(
-        GameManager gameManager, 
-        SaveManager saveManager, 
-        UIManager uiManager, 
-        SceneManagerService sceneManagerService, 
-        LevelManager levelManager,
-        GameplayObjectiveManager objectiveManager)
+    private void Awake()
     {
-        this.gameManager         = gameManager;
-        this.saveManager         = saveManager;
-        this.uiManager           = uiManager;
-        this.sceneManagerService = sceneManagerService;
-        this.levelManager        = levelManager;
-        this.objectiveManager    = objectiveManager;
+        Instance = this;
+
+        holeController = GetComponentInChildren<HoleController>(true);
+        gameTimer      = GetComponentInChildren<GameTimer>(true);
+        swallowHandler = GetComponentInChildren<SwallowHandler>(true);
+
+        if (holeController == null) holeController = FindAnyObjectByType<HoleController>(FindObjectsInactive.Include);
+        if (gameTimer      == null) gameTimer      = FindAnyObjectByType<GameTimer>(FindObjectsInactive.Include);
+        if (swallowHandler == null) swallowHandler = FindAnyObjectByType<SwallowHandler>(FindObjectsInactive.Include);
     }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        UnsubscribeEvents();
+        GameplayObjectiveManager.Instance?.Cleanup();
+    }
+    [Header("Level")]
+    [SerializeField] private int startLevelIndex = 0;
 
     private HoleController holeController;
     private GameTimer      gameTimer;
     private SwallowHandler swallowHandler;
 
-    private void Awake()
+    private int  currentLevelIndex;
+    private bool isInitialized;
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    public void StartLevel()
     {
-        holeController = FindAnyObjectByType<HoleController>();
-        gameTimer      = FindAnyObjectByType<GameTimer>();
-        swallowHandler = FindAnyObjectByType<SwallowHandler>();
+        currentLevelIndex = SaveManager.Instance?.PlayerData?.currentLevelIndex ?? -1;
+        if (currentLevelIndex < 0) currentLevelIndex = startLevelIndex;
+        InitLevel();
     }
-    #endregion
 
-    private void Start()
+    public void RestartLevel()
     {
-        // Đọc level index từ save data.
-        // -1 = lần đầu chơi → dùng startLevelIndex từ Inspector.
-        currentLevelIndex = saveManager?.PlayerData?.currentLevelIndex ?? -1;
-        if (currentLevelIndex < 0)
-            currentLevelIndex = startLevelIndex;
+        LevelManager.Instance.CleanupLevel();
+        UnsubscribeEvents();
+        InitLevel();
+    }
 
-        // Load data + spawn level prefab
-        levelManager.LoadAndSpawnLevel(currentLevelIndex);
+    public void Cleanup()
+    {
+        holeController?.SetInputEnabled(false);
+        gameTimer?.StopTimer();
+        LevelManager.Instance?.CleanupLevel();
+        UnsubscribeEvents();
+        isInitialized = false;
+        Debug.Log("[GameplayController] Cleanup done.");
+    }
 
-        // Initialize objective system
-        objectiveManager.InitializeLevel(levelManager.CurrentLevelDefinition);
-        objectiveManager.OnAllObjectivesCompleted += OnLevelWin;
+    public void RebornPlayer()
+    {
+        GameManager.Instance.ChangeState(GameState.Gameplay);
+        holeController?.SetInputEnabled(true);
+        gameTimer?.AddTime(0f);
+        Debug.Log("[GameplayController] Player hồi sinh — gameplay tiếp tục.");
+    }
 
-        // Subscribe GameOver events
-        gameTimer.OnTimeUp += OnGameOverTimeUp;
+    public void CheatWin() => OnLevelWin();
+
+    // ── Internal ──────────────────────────────────────────────────────────────
+
+    private void InitLevel()
+    {
+        SubscribeEvents();
+
+        LevelManager.Instance.LoadAndSpawnLevel(currentLevelIndex);
+
+        var objectiveManager = GameplayObjectiveManager.Instance;
+        objectiveManager.InitializeLevel(LevelManager.Instance.CurrentLevelDefinition);
+
+        float timeLimit = LevelManager.Instance.CurrentLevelDefinition != null
+            ? LevelManager.Instance.CurrentLevelDefinition.TimeLimit
+            : 120f;
+        gameTimer?.StartTimer(timeLimit);
+
+        GameplayPanel gameplayPanel = UIManager.Instance.GetWindow<GameplayPanel>();
+        if (gameplayPanel != null && LevelManager.Instance.CurrentLevelDefinition != null)
+            gameplayPanel.SetupObjectives(LevelManager.Instance.CurrentLevelDefinition.LevelObjectives);
+
+        GameManager.Instance.ChangeState(GameState.Gameplay);
+        holeController?.SetInputEnabled(true);
+
+        isInitialized = true;
+        Debug.Log($"[GameplayController] Level {currentLevelIndex} started.");
+    }
+
+    private void SubscribeEvents()
+    {
+        UnsubscribeEvents();
+
+        var objectiveManager = GameplayObjectiveManager.Instance;
+        if (objectiveManager != null)
+            objectiveManager.OnAllObjectivesCompleted += OnLevelWin;
+
+        if (gameTimer != null)
+            gameTimer.OnTimeUp += OnGameOverTimeUp;
 
         if (swallowHandler != null)
             swallowHandler.OnBombSwallowedWithoutShield += OnGameOverBomb;
         else
-            Debug.LogWarning("[GameplayController] SwallowHandler not found — bomb game over will not trigger.");
-
-        StartGameplay();
+            Debug.LogWarning("[GameplayController] SwallowHandler not found.");
     }
 
-    private void StartGameplay()
+    private void UnsubscribeEvents()
     {
-        gameManager.ChangeState(GameState.Gameplay);
-        holeController.SetInputEnabled(true);
+        var objectiveManager = GameplayObjectiveManager.Instance;
+        if (objectiveManager != null)
+            objectiveManager.OnAllObjectivesCompleted -= OnLevelWin;
 
-        // Lấy timeLimit từ LevelDefinition — không dùng giá trị hardcode trong GameTimer Inspector
-        float timeLimit = levelManager.CurrentLevelDefinition != null
-            ? levelManager.CurrentLevelDefinition.TimeLimit
-            : 120f;
-        gameTimer.StartTimer(timeLimit);
-
-        // Setup UI với objectives
-        GameplayPanel gameplayPanel = uiManager.GetWindow<GameplayPanel>();
-        if (gameplayPanel != null && levelManager.CurrentLevelDefinition != null)
-        {
-            gameplayPanel.SetupObjectives(levelManager.CurrentLevelDefinition.LevelObjectives);
-        }
+        if (gameTimer != null)    gameTimer.OnTimeUp -= OnGameOverTimeUp;
+        if (swallowHandler != null) swallowHandler.OnBombSwallowedWithoutShield -= OnGameOverBomb;
     }
 
     private void OnLevelWin()
     {
         Debug.Log("[GameplayController] Level Win!");
-        gameManager.ChangeState(GameState.Result);
-        holeController.SetInputEnabled(false);
-        gameTimer.StopTimer();
-        levelManager.CleanupLevel();
 
-        // Tăng level và lưu — chỉ tăng khi WIN, không tăng khi GameOver
+        GameManager.Instance.ChangeState(GameState.Result);
+        holeController?.SetInputEnabled(false);
+        gameTimer?.StopTimer();
+        LevelManager.Instance.CleanupLevel();
+        UnsubscribeEvents();
+
         AdvanceAndSaveLevel();
 
-        GameWinPopup panel = uiManager.Open<GameWinPopup>();
-        int reward = levelManager.CurrentLevelDefinition != null
-            ? levelManager.CurrentLevelDefinition.CurrencyReward
-            : 0;
+        GameWinPopup panel = UIManager.Instance.Open<GameWinPopup>();
+        int reward = LevelManager.Instance.CurrentLevelDefinition?.CurrencyReward ?? 0;
         panel?.Setup(reward);
     }
 
-    /// <summary>
-    /// Tính level tiếp theo (mod % để quay vòng) và lưu vào save data.
-    /// Chỉ gọi khi player WIN — GameOver không gọi hàm này.
-    /// </summary>
-    private void AdvanceAndSaveLevel()
-    {
-        if (saveManager?.PlayerData == null) return;
-
-        int nextIndex = levelManager.GetNextLevelIndex(currentLevelIndex);
-        saveManager.PlayerData.currentLevelIndex = nextIndex;
-        saveManager.Save().Forget();
-
-        Debug.Log($"[GameplayController] Level advanced: {currentLevelIndex} → {nextIndex} (total: {levelManager.TotalLevels}).");
-    }
-
-    // Disable Input, StopTimer — hết giờ
     private void OnGameOverTimeUp()
     {
         Debug.Log("[GameplayController] GameOver — TimeUp.");
         TriggerGameOver();
-        uiManager.Open<GameOverTimeUpPopup>();
+        UIManager.Instance.Open<GameOverTimeUpPopup>();
     }
 
-    // Disable Input, StopTimer — nuốt phải bom
     private void OnGameOverBomb()
     {
-        Debug.Log("[GameplayController] GameOver — BombExplosion.");
+        Debug.Log("[GameplayController] GameOver — Bomb.");
         TriggerGameOver();
-        uiManager.Open<GameOverBombPopup>();
+        UIManager.Instance.Open<GameOverBombPopup>();
     }
 
-    /// <summary>Trạng thái chung khi GameOver bất kể nguyên nhân.</summary>
     private void TriggerGameOver()
     {
-        gameManager.ChangeState(GameState.Result);
-        holeController.SetInputEnabled(false);
-        gameTimer.StopTimer();
-        // KHÔNG cleanup level ở đây — player có thể revive và tiếp tục chơi
-        // Chỉ cleanup khi thực sự quit hoặc win
+        GameManager.Instance.ChangeState(GameState.Result);
+        holeController?.SetInputEnabled(false);
+        gameTimer?.StopTimer();
     }
 
-    /// <summary>
-    /// Hồi sinh player sau khi tốn 900 vàng.
-    /// Gọi từ GameOverBombPopup sau khi đã trừ currency.
-    /// Resume gameplay: bật input + tiếp tục timer với thời gian còn lại.
-    /// </summary>
-    public void RebornPlayer()
+    private void AdvanceAndSaveLevel()
     {
-        gameManager.ChangeState(GameState.Gameplay);
-        holeController.SetInputEnabled(true);
-        gameTimer.AddTime(0f); // resume timer với thời gian hiện tại, không reset
+        if (SaveManager.Instance?.PlayerData == null) return;
 
-        Debug.Log("[GameplayController] Player đã hồi sinh — gameplay tiếp tục.");
+        int nextIndex = LevelManager.Instance.GetNextLevelIndex(currentLevelIndex);
+        SaveManager.Instance.PlayerData.currentLevelIndex = nextIndex;
+        SaveManager.Instance.Save().Forget();
+
+        Debug.Log($"[GameplayController] Level advanced: {currentLevelIndex} → {nextIndex}.");
     }
 
-    /// <summary>
-    /// Chơi lại level hiện tại từ đầu (không reborn — reset hoàn toàn).
-    /// Gọi từ TryAgainPopup.
-    /// </summary>
-    public async UniTaskVoid RestartLevelAsync()
-    {
-        gameManager.ChangeState(GameState.Loading);
-        await sceneManagerService.LoadScene("GameplayScene");
-
-        Debug.Log("[GameplayController] Restart level — reload GameplayScene.");
-    }
-
-    //public async UniTaskVoid GoToMainMenuAsync()
-    //{
-    //    gameManager.ChangeState(GameState.Loading);
-    //    await sceneManagerService.LoadScene(mainMenuScene);
-    //}
-
-#if UNITY_EDITOR
-    /// <summary>
-    /// Cheat win — chỉ dùng trong Editor, gọi từ EditorCheatController [N].
-    /// Bỏ qua objective, mở thẳng GameWinPopup.
-    /// </summary>
-    public void CheatWin()
-    {
-        OnLevelWin();
-    }
-#endif
-
-    private void OnDestroy()
-    {
-        if (gameTimer != null)
-            gameTimer.OnTimeUp -= OnGameOverTimeUp;
-
-        if (swallowHandler != null)
-            swallowHandler.OnBombSwallowedWithoutShield -= OnGameOverBomb;
-
-        if (objectiveManager != null)
-        {
-            objectiveManager.OnAllObjectivesCompleted -= OnLevelWin;
-            objectiveManager.Cleanup();
-        }
-    }
 }

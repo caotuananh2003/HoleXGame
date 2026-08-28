@@ -1,148 +1,87 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
-using VContainer;
 
-/// <summary>
-/// Popup cài đặt âm thanh.
-/// Mode = Popup trong Inspector.
-///
-/// Khi mở: Toggle đọc trạng thái hiện tại từ AudioManager.
-/// Khi Toggle thay đổi: cập nhật AudioManager (tự lưu qua SaveManager).
-/// </summary>
 public class SettingPopup : PopupWindow
 {
-    // -------------------------------------------------------------------------
-    // Navigation
-    // -------------------------------------------------------------------------
+    [Serializable]
+    private struct ToggleButton
+    {
+        public Button     button;
+        public GameObject onImage;
+        public GameObject offImage;
+
+        public readonly void SetActive(bool isOn)
+        {
+            if (onImage  != null) onImage.SetActive(isOn);
+            if (offImage != null) offImage.SetActive(!isOn);
+        }
+    }
 
     [Header("Navigation")]
     [SerializeField] private Button closeButton;
 
-    // -------------------------------------------------------------------------
-    // Audio
-    // -------------------------------------------------------------------------
-
-    [Header("Audio")]
-    [SerializeField] private Toggle musicToggle;
-    [SerializeField] private Toggle soundToggle;
-
-    // -------------------------------------------------------------------------
-    // Dependencies
-    // -------------------------------------------------------------------------
-
-    private AudioManager audioManager;
-
-    [Inject]
-    private void Construct(AudioManager audioManager)
-    {
-        this.audioManager = audioManager;
-    }
-
-    // =========================================================================
-    // Unity lifecycle
-    // =========================================================================
+    [Header("Audio Buttons")]
+    [SerializeField] private ToggleButton musicButton;
+    [SerializeField] private ToggleButton soundButton;
+    [SerializeField] private ToggleButton vibraButton;
 
     private void Start()
     {
-        if (closeButton == null)
-            Debug.LogWarning("[SettingPopup] closeButton is not assigned in Inspector.");
-        else
-            closeButton.onClick.AddListener(OnCloseClicked);
-
-        if (musicToggle == null)
-            Debug.LogWarning("[SettingPopup] musicToggle is not assigned in Inspector.");
-        else
-            musicToggle.onValueChanged.AddListener(OnMusicToggleChanged);
-
-        if (soundToggle == null)
-            Debug.LogWarning("[SettingPopup] soundToggle is not assigned in Inspector.");
-        else
-            soundToggle.onValueChanged.AddListener(OnSoundToggleChanged);
+        if (closeButton        != null) closeButton.onClick.AddListener(OnCloseClicked);
+        if (musicButton.button != null) musicButton.button.onClick.AddListener(OnMusicClicked);
+        if (soundButton.button != null) soundButton.button.onClick.AddListener(OnSoundClicked);
+        if (vibraButton.button != null) vibraButton.button.onClick.AddListener(OnVibraClicked);
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
-        if (closeButton != null)
-            closeButton.onClick.RemoveListener(OnCloseClicked);
-
-        if (musicToggle != null)
-            musicToggle.onValueChanged.RemoveListener(OnMusicToggleChanged);
-
-        if (soundToggle != null)
-            soundToggle.onValueChanged.RemoveListener(OnSoundToggleChanged);
+        base.OnDestroy();
+        if (closeButton        != null) closeButton.onClick.RemoveListener(OnCloseClicked);
+        if (musicButton.button != null) musicButton.button.onClick.RemoveListener(OnMusicClicked);
+        if (soundButton.button != null) soundButton.button.onClick.RemoveListener(OnSoundClicked);
+        if (vibraButton.button != null) vibraButton.button.onClick.RemoveListener(OnVibraClicked);
     }
-
-    // =========================================================================
-    // UIWindow — sync UI khi popup được mở / bật lại
-    // =========================================================================
 
     public override void Open()
     {
         base.Open();
         UIManager?.PlaySFX(AudioID.SFX.UiPopup);
-        SyncToggles();
+        SyncButtonVisuals();
     }
 
-    // =========================================================================
-    // UI sync
-    // =========================================================================
-
-    /// <summary>
-    /// Đọc trạng thái từ AudioManager và cập nhật Toggle mà không trigger callback.
-    /// </summary>
-    private void SyncToggles()
+    private void SyncButtonVisuals()
     {
-        if (audioManager == null)
-        {
-            Debug.LogWarning("[SettingPopup] audioManager is null. Cannot sync toggles.");
-            return;
-        }
-
-        // Toggle.isOn = true nghĩa là âm thanh BẬT (không bị mute).
-        // SetWithoutNotify() tránh trigger onValueChanged khi sync.
-        if (musicToggle != null)
-            musicToggle.SetIsOnWithoutNotify(!audioManager.IsBGMMuted);
-
-        if (soundToggle != null)
-            soundToggle.SetIsOnWithoutNotify(!audioManager.IsSFXMuted);
+        var am = AudioManager.Instance;
+        if (am == null) return;
+        musicButton.SetActive(!am.IsBGMMuted);
+        soundButton.SetActive(!am.IsSFXMuted);
+        vibraButton.SetActive(am.IsVibrationEnabled);
     }
 
-    // =========================================================================
-    // Handlers
-    // =========================================================================
+    private void OnCloseClicked() => UIManager?.Close<SettingPopup>();
 
-    private void OnCloseClicked()
+    private void OnMusicClicked()
     {
-        UIManager?.Close<SettingPopup>();
+        var am = AudioManager.Instance; if (am == null) return;
+        bool nowMuted = !am.IsBGMMuted;
+        am.SetBGMMuted(nowMuted);
+        musicButton.SetActive(!nowMuted);
     }
 
-    /// <summary>
-    /// isOn = true → âm nhạc BẬT → không mute.
-    /// isOn = false → âm nhạc TẮT → mute.
-    /// </summary>
-    private void OnMusicToggleChanged(bool isOn)
+    private void OnSoundClicked()
     {
-        if (audioManager == null)
-        {
-            Debug.LogWarning("[SettingPopup] audioManager is null. Cannot change music state.");
-            return;
-        }
-
-        audioManager.SetBGMMuted(!isOn);
+        var am = AudioManager.Instance; if (am == null) return;
+        bool nowMuted = !am.IsSFXMuted;
+        am.SetSFXMuted(nowMuted);
+        soundButton.SetActive(!nowMuted);
     }
 
-    /// <summary>
-    /// isOn = true → âm thanh BẬT → không mute.
-    /// isOn = false → âm thanh TẮT → mute.
-    /// </summary>
-    private void OnSoundToggleChanged(bool isOn)
+    private void OnVibraClicked()
     {
-        if (audioManager == null)
-        {
-            Debug.LogWarning("[SettingPopup] audioManager is null. Cannot change sound state.");
-            return;
-        }
-
-        audioManager.SetSFXMuted(!isOn);
+        var am = AudioManager.Instance; if (am == null) return;
+        bool nowEnabled = !am.IsVibrationEnabled;
+        am.SetVibration(nowEnabled);
+        vibraButton.SetActive(nowEnabled);
     }
 }
