@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using VContainer;
 
 /// <summary>
 /// Panel chính trong gameplay. Mode = Persistent (luôn hiện trong suốt ván chơi).
@@ -26,6 +25,8 @@ public class GameplayPanel : UIWindow
     [SerializeField] private Transform gameItemsContainer;  // GameplayCanvas/GameplayPanel/GameItems
     [SerializeField] private ItemSlotUI itemSlotPrefab;     // Prefab có ItemSlotUI component
     [SerializeField] private ItemDatabase itemDatabase;     // SO chứa danh sách ItemDefinition
+
+    public ItemDatabase ItemDatabase => itemDatabase;
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI timerText;
@@ -39,24 +40,21 @@ public class GameplayPanel : UIWindow
 
     // Runtime
     private Dictionary<LevelObjective, ObjectiveUIItem> objectiveItemMap = new Dictionary<LevelObjective, ObjectiveUIItem>();
-    private GameplayObjectiveManager gameplayObjectiveManager;
-    private ItemManager itemManager;
-
-    [Inject]
-    private void Construct(GameplayObjectiveManager gameplayObjectiveManager, ItemManager itemManager)
-    {
-        this.gameplayObjectiveManager = gameplayObjectiveManager;
-        this.itemManager              = itemManager;
-    }
+    private GameplayObjectiveManager _gameplayObjectiveManager;
+    private ItemManager _itemManager;
 
     private void Awake()
     {
-        holeSizeController = FindAnyObjectByType<HoleSizeController>();
-        holeController = FindAnyObjectByType<HoleController>();
-        gameTimer = FindAnyObjectByType<GameTimer>();
+        holeSizeController = FindAnyObjectByType<HoleSizeController>(FindObjectsInactive.Include);
+        holeController     = FindAnyObjectByType<HoleController>(FindObjectsInactive.Include);
+        gameTimer          = FindAnyObjectByType<GameTimer>(FindObjectsInactive.Include);
     }
+
     private void Start()
     {
+        // ItemManager sống ngoài gameplayGroup nên Instance đã có lúc Start() chạy
+        _itemManager = ItemManager.Instance;
+
         if (settingButton != null)
             settingButton.onClick.AddListener(OnSettingClicked);
 
@@ -133,7 +131,7 @@ public class GameplayPanel : UIWindow
             return;
         }
 
-        if (itemManager == null)
+        if (_itemManager == null)
         {
             Debug.LogWarning("[GameplayPanel] ItemManager chưa được inject — không thể spawn item slots.");
             return;
@@ -150,24 +148,24 @@ public class GameplayPanel : UIWindow
             int quantity = GetOrInitQuantity(itemDef);
 
             // Lấy unlock state từ ItemManager
-            bool unlocked = itemManager.IsItemUnlocked(itemDef);
+            bool unlocked = _itemManager.IsItemUnlocked(itemDef);
 
             // Spawn prefab
             ItemSlotUI slot = Instantiate(itemSlotPrefab, gameItemsContainer);
             slot.Setup(itemDef, quantity, unlocked);
-            slot.Initialize(itemManager); // Inject ItemManager để subscribe OnItemEffectStarted
+            slot.Initialize(_itemManager); // Inject ItemManager để subscribe OnItemEffectStarted
             slot.OnClicked += OnItemSlotClicked;
 
             spawnedSlots.Add(slot);
         }
 
         // Subscribe ItemManager events để refresh UI khi quantity / unlock thay đổi
-        itemManager.OnItemUsed      += OnItemUsedHandler;
-        itemManager.OnItemUseFailed += OnItemUseFailedHandler;
-        itemManager.OnItemUnlocked  += OnItemUnlockedHandler;
+        _itemManager.OnItemUsed      += OnItemUsedHandler;
+        _itemManager.OnItemUseFailed += OnItemUseFailedHandler;
+        _itemManager.OnItemUnlocked  += OnItemUnlockedHandler;
 
         // Check và unlock những item đủ điều kiện dựa trên số màn đã vượt qua
-        itemManager.CheckAndUnlockItems(itemDatabase);
+        _itemManager.CheckAndUnlockItems(itemDatabase);
     }
 
     /// <summary>
@@ -176,14 +174,14 @@ public class GameplayPanel : UIWindow
     /// </summary>
     private int GetOrInitQuantity(ItemDefinition itemDef)
     {
-        int quantity = itemManager.GetQuantity(itemDef.ItemId);
+        int quantity = _itemManager.GetQuantity(itemDef.ItemId);
 
         // GetQuantity trả về 0 khi chưa có entry — cần phân biệt "đã save = 0" và "chưa từng save"
         // Dùng SaveManager.PlayerData.itemQuantities.ContainsKey để check
-        if (quantity == 0 && !itemManager.HasQuantityEntry(itemDef.ItemId))
+        if (quantity == 0 && !_itemManager.HasQuantityEntry(itemDef.ItemId))
         {
             quantity = itemDef.DefaultAmount;
-            itemManager.SetQuantity(itemDef.ItemId, quantity);
+            _itemManager.SetQuantity(itemDef.ItemId, quantity);
         }
 
         return quantity;
@@ -208,6 +206,10 @@ public class GameplayPanel : UIWindow
     /// </summary>
     public void SetupObjectives(List<LevelObjective> objectives)
     {
+        // GameplayObjectiveManager nằm trong gameplayGroup (inactive lúc Start) →
+        // Instance chỉ có sau khi gameplayGroup.SetActive(true), resolve lazy ở đây.
+        _gameplayObjectiveManager ??= GameplayObjectiveManager.Instance;
+
         if (objectives == null || objectivesContainer == null || objectiveItemPrefab == null)
         {
             Debug.LogWarning("[GameplayPanel] Cannot setup objectives. Missing references.");
@@ -229,8 +231,15 @@ public class GameplayPanel : UIWindow
             objectiveItemMap[objective] = item;
         }
 
-        gameplayObjectiveManager.OnObjectiveUpdated   += OnObjectiveUpdated;
-        gameplayObjectiveManager.OnObjectiveCompleted += OnObjectiveCompleted;
+        if (_gameplayObjectiveManager != null)
+        {
+            _gameplayObjectiveManager.OnObjectiveUpdated   += OnObjectiveUpdated;
+            _gameplayObjectiveManager.OnObjectiveCompleted += OnObjectiveCompleted;
+        }
+        else
+        {
+            Debug.LogWarning("[GameplayPanel] gameplayObjectiveManager is null — objective events not subscribed.");
+        }
 
         Debug.Log($"[GameplayPanel] Setup {objectiveItemMap.Count} objective items.");
     }
@@ -256,9 +265,9 @@ public class GameplayPanel : UIWindow
 
     private void OnItemSlotClicked(ItemDefinition item)
     {
-        if (itemManager == null || item == null) return;
+        if (_itemManager == null || item == null) return;
 
-        bool success = itemManager.UseItem(item);
+        bool success = _itemManager.UseItem(item);
 
         if (!success)
         {
@@ -298,7 +307,7 @@ public class GameplayPanel : UIWindow
 
     private void RefreshItemSlotQuantity(string itemId)
     {
-        if (itemManager == null) return;
+        if (_itemManager == null) return;
 
         foreach (ItemSlotUI slot in spawnedSlots)
         {
@@ -307,7 +316,7 @@ public class GameplayPanel : UIWindow
             // ItemSlotUI expose ItemId qua property để tìm đúng slot
             if (slot.ItemId == itemId)
             {
-                slot.UpdateQuantity(itemManager.GetQuantity(itemId));
+                slot.UpdateQuantity(_itemManager.GetQuantity(itemId));
                 break;
             }
         }
@@ -324,20 +333,20 @@ public class GameplayPanel : UIWindow
         if (settingButton != null)
             settingButton.onClick.RemoveListener(OnSettingClicked);
 
-        if (gameplayObjectiveManager != null)
+        if (_gameplayObjectiveManager != null)
         {
-            gameplayObjectiveManager.OnObjectiveUpdated   -= OnObjectiveUpdated;
-            gameplayObjectiveManager.OnObjectiveCompleted -= OnObjectiveCompleted;
+            _gameplayObjectiveManager.OnObjectiveUpdated   -= OnObjectiveUpdated;
+            _gameplayObjectiveManager.OnObjectiveCompleted -= OnObjectiveCompleted;
         }
 
         // Unsubscribe và clear spawned item slots
         ClearItemSlots();
 
-        if (itemManager != null)
+        if (_itemManager != null)
         {
-            itemManager.OnItemUsed      -= OnItemUsedHandler;
-            itemManager.OnItemUseFailed -= OnItemUseFailedHandler;
-            itemManager.OnItemUnlocked  -= OnItemUnlockedHandler;
+            _itemManager.OnItemUsed      -= OnItemUsedHandler;
+            _itemManager.OnItemUseFailed -= OnItemUseFailedHandler;
+            _itemManager.OnItemUnlocked  -= OnItemUnlockedHandler;
         }
 
         if (gameTimer != null)

@@ -5,11 +5,37 @@ public class HoleSkinApplier : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer holeSkinRenderer;
     [SerializeField] private PlayerProfile  playerProfile;
+    public static HoleSkinApplier Instance { get; private set; }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
+        Apply();
+    }
+
+    /// <summary>
+    /// Áp dụng skin hiện tại từ save data.
+    /// Gọi từ Start() hoặc từ GameplayController.StartLevel() sau khi save đã load xong.
+    /// </summary>
+    public void Apply()
+    {
         if (holeSkinRenderer == null || playerProfile == null) return;
-        if (SaveManager.Instance?.PlayerData == null) { Debug.LogWarning("[HoleSkinApplier] PlayerData is null."); return; }
+
+        if (SaveManager.Instance == null)
+        {
+            Debug.LogWarning("SaveManager.Instance is null");
+            return;
+        }
+
+        if (SaveManager.Instance?.PlayerData == null)
+        {
+            Debug.LogWarning("[HoleSkinApplier] PlayerData is null — skin sẽ được áp dụng khi SaveManager sẵn sàng.");
+            return;
+        }
 
         ResolveDefaultIfNeeded();
         ApplyCurrentSkin();

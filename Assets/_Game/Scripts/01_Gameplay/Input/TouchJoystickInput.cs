@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 /// <summary>
@@ -69,28 +71,44 @@ public class TouchJoystickInput : MonoBehaviour
 
     private void HandleTouch(Touchscreen touch)
     {
-        
         if (touch.primaryTouch.press.wasPressedThisFrame)
-            BeginDrag(touch.primaryTouch.position.ReadValue());
+        {
+            if (!IsPointerOverUI(touch.primaryTouch.position.ReadValue()))
+                BeginDrag(touch.primaryTouch.position.ReadValue());
+        }
         else if (touch.primaryTouch.press.isPressed)
             UpdateDrag(touch.primaryTouch.position.ReadValue());
 
         if (touch.primaryTouch.press.wasReleasedThisFrame)
-        {
             EndDrag();
-        }
     }
 
     private void HandleMouse(Mouse mouse)
     {
         if (mouse.leftButton.wasPressedThisFrame)
-            BeginDrag(mouse.position.ReadValue());
+        {
+            if (!IsPointerOverUI(mouse.position.ReadValue()))
+                BeginDrag(mouse.position.ReadValue());
+        }
         else if (mouse.leftButton.isPressed)
             UpdateDrag(mouse.position.ReadValue());
         else if (mouse.leftButton.wasReleasedThisFrame)
             EndDrag();
         else if (!mouse.leftButton.isPressed)
             ResetInput();
+    }
+
+    /// <summary>
+    /// Trả về true nếu screenPos đang đè lên một UI element có Raycast Target.
+    /// Dùng để bỏ qua joystick khi người dùng chạm vào button/item.
+    /// </summary>
+    private static readonly List<RaycastResult> _raycastResults = new();
+    private bool IsPointerOverUI(Vector2 screenPos)
+    {
+        var eventData = new PointerEventData(EventSystem.current) { position = screenPos };
+        _raycastResults.Clear();
+        EventSystem.current.RaycastAll(eventData, _raycastResults);
+        return _raycastResults.Count > 0;
     }
 
     private void BeginDrag(Vector2 screenPos)

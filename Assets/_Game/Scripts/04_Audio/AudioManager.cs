@@ -50,7 +50,7 @@ public class AudioManager : MonoBehaviour
         EnsureAudioSources();
         BuildClipCache();
 
-        if (SaveManager.Instance?.PlayerData == null)
+        if (SaveManager.Instance?.PlayerData == null) // SaveManager can khoi tao PlayerData truoc khi Audiomanager Init.
         {
             Debug.LogWarning("AudioManager initialized before SaveManager data was ready.");
             return;

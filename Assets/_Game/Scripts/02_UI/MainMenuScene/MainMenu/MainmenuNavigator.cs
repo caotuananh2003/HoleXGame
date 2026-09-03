@@ -1,8 +1,13 @@
 using UnityEngine;
 
 public class MainmenuNavigator : MonoBehaviour
-{
-    public void GoToGameplay() => TransitionService.Instance?.TransitionToGameplayAsync().Forget();
+{    
+    public static MainmenuNavigator Instance { get; private set; }
 
-    public static void GoToGameplayStatic() => TransitionService.Instance?.TransitionToGameplayAsync().Forget();
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    public void GoToGameplay() => TransitionService.Instance?.TransitionToGameplayAsync().Forget();
 }

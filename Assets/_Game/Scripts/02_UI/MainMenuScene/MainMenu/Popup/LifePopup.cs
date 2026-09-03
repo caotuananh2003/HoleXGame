@@ -21,8 +21,9 @@ public class LifePopup : PopupWindow
         closeButton.onClick.AddListener(OnCloseClicked);
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy();
         if (closeButton != null)
             closeButton.onClick.RemoveListener(OnCloseClicked);
     }

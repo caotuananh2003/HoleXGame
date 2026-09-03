@@ -21,26 +21,24 @@ public class SizeProgressBar : MonoBehaviour
     [Header("UI Refs")]
     [SerializeField] private Slider    progressSlider;
     [SerializeField] private TMP_Text  levelText;
-
-    // ── Dependency ────────────────────────────────────────────────────────────
-    private HoleController holeController;
+    [SerializeField] private HoleController _holeController;
 
     // =========================================================================
     // Unity lifecycle
     // =========================================================================
 
-    private void Start()
+    private void Awake()
     {
-        holeController = FindAnyObjectByType<HoleController>();
-
-        if (holeController == null)
+        if (_holeController == null)
         {
             Debug.LogWarning("[SizeProgressBar] Không tìm thấy HoleController.");
             return;
         }
-
-        holeController.OnProgressChanged += HandleProgressChanged;
-        holeController.OnLevelUp         += HandleLevelUp;
+    }
+    private void Start()
+    {
+        _holeController.OnProgressChanged += HandleProgressChanged;
+        _holeController.OnLevelUp         += HandleLevelUp;
 
         // Trạng thái ban đầu
         SetProgress(0f);
@@ -49,10 +47,10 @@ public class SizeProgressBar : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (holeController != null)
+        if (_holeController != null)
         {
-            holeController.OnProgressChanged -= HandleProgressChanged;
-            holeController.OnLevelUp         -= HandleLevelUp;
+            _holeController.OnProgressChanged -= HandleProgressChanged;
+            _holeController.OnLevelUp         -= HandleLevelUp;
         }
     }
 

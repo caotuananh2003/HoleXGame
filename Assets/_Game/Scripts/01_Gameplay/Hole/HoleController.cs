@@ -133,6 +133,41 @@ public class HoleController : MonoBehaviour
     // Public API — gọi từ InputManager / GameplayController
     // =========================================================================
 
+    /// <summary>
+    /// Reset toàn bộ state về ban đầu: score, milestone, speed, position.
+    /// Gọi từ GameplayController trước mỗi màn mới.
+    /// </summary>
+    public void ResetToInitial()
+    {
+        // Reset runtime tracking
+        score              = 0;
+        nextMilestoneIndex = 0;
+        currentSpeed       = initialSpeed;
+
+        // Reset movement speed
+        holeMovement?.SetSpeed(currentSpeed);
+
+        // Reset vị trí player về origin
+        transform.position = Vector3.zero;
+
+        // Reset collider + visual về trạng thái ban đầu
+        holeSizeController?.Init(
+            holeCollider,
+            limitedCollider,
+            holeSkin,
+            directionArrow,
+            fakeGround,
+            initialHoleRadius,
+            colliderHalfSize,
+            growDuration,
+            growEase);
+
+        // Fire để UI (progress bar, score text...) cập nhật về 0
+        FireProgressChanged();
+
+        Debug.Log("[HoleController] ResetToInitial done.");
+    }
+
     public void SetInputEnabled(bool enabled)
     {
         holeMovement?.SetInputEnabled(enabled);

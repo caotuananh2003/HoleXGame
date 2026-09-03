@@ -9,6 +9,7 @@ public class ProfilePopup : PopupWindow
     [SerializeField] private TMP_Text       nameText;
     [SerializeField] private ProfilePreview profilePreview;
     [SerializeField] private PlayerProfile  playerProfile;
+    private SaveManager _saveManager;
 
     public override void Open()
     {
@@ -20,6 +21,8 @@ public class ProfilePopup : PopupWindow
 
     private void Start()
     {
+        _saveManager = SaveManager.Instance;
+
         closeButton.onClick.AddListener(OnCloseClicked);
         editButton.onClick.AddListener(OnEditClicked);
 
@@ -31,16 +34,17 @@ public class ProfilePopup : PopupWindow
         RefreshPreview();
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy();
         closeButton.onClick.RemoveListener(OnCloseClicked);
         editButton.onClick.RemoveListener(OnEditClicked);
     }
 
     public void RefreshPreview()
     {
-        if (SaveManager.Instance?.PlayerData == null) return;
-        ProfileData profile = SaveManager.Instance.PlayerData.profileData;
+        if (_saveManager?.PlayerData == null) return;
+        ProfileData profile = _saveManager.PlayerData.profileData;
         profilePreview?.Refresh(profile);
         if (nameText != null)
             nameText.text = string.IsNullOrWhiteSpace(profile.playerName) ? "Player" : profile.playerName;

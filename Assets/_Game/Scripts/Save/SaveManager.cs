@@ -1,6 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// Toàn bộ dữ liệu runtime của người chơi được serialize xuống PlayerPrefs.
@@ -37,10 +38,10 @@ public class PlayerData
 
     // ── Shop — item đã mua/unlock ─────────────────────────────────────────────
     /// <summary>Danh sách ID HoleSkin đã được mua (ngoài các item unlockedByDefault).</summary>
-    public System.Collections.Generic.List<string> unlockedHoleSkinIds = new();
+    public List<string> unlockedHoleSkinIds = new();
 
     /// <summary>Danh sách ID MapTheme đã được mua (ngoài các item unlockedByDefault).</summary>
-    public System.Collections.Generic.List<string> unlockedMapThemeIds = new();
+    public List<string> unlockedMapThemeIds = new();
 
     // ── Economy ───────────────────────────────────────────────────────────────
     /// <summary>Lượng currency hiện có. Mặc định 5000.</summary>
@@ -55,25 +56,25 @@ public class PlayerData
     /// Key = itemId (string), Value = current quantity (int).
     /// Không serialize dictionary trực tiếp — dùng helper list cho JsonUtility.
     /// </summary>
-    [System.NonSerialized]
-    public System.Collections.Generic.Dictionary<string, int> itemQuantities = new();
+    [NonSerialized]
+    public Dictionary<string, int> itemQuantities = new();
 
     // Helper cho JsonUtility serialize Dictionary
-    [System.Serializable]
+    [Serializable]
     public struct ItemQuantityEntry
     {
         public string itemId;
         public int quantity;
     }
 
-    public System.Collections.Generic.List<ItemQuantityEntry> itemQuantityList = new();
+    public List<ItemQuantityEntry> itemQuantityList = new();
 
     // ── Items — Unlock state ──────────────────────────────────────────────────
     /// <summary>
     /// Danh sách itemId đã được unlock bởi việc đạt đủ hole level.
     /// Backward-compatible: save cũ không có field này → list rỗng → item vẫn locked.
     /// </summary>
-    public System.Collections.Generic.List<string> unlockedItemIds = new();
+    public List<string> unlockedItemIds = new();
 
     /// <summary>
     /// Gọi trước khi serialize (trong SaveManager.Save()).
@@ -110,19 +111,26 @@ public class PlayerData
 /// <summary>
 /// Quản lý load/save PlayerData.
 /// Dữ liệu được encode Base64(JSON) và lưu vào PlayerPrefs.
-/// Inject vào bất kỳ class nào cần đọc/ghi save data qua VContainer.
 /// </summary>
 public class SaveManager : MonoBehaviour
-{
+{    /// <summary>Dữ liệu đang được load. Null cho đến khi Initialize() hoàn tất.</summary>
+    public PlayerData PlayerData { get; private set; }
+
     public static SaveManager Instance { get; private set; }
 
-    private void Awake()   { Instance = this; }
+    private void Awake()
+    {
+        Instance = this;
+        // Đảm bảo PlayerData luôn có giá trị ngay sau Awake —
+        // tránh NullReferenceException khi các class khác truy cập trước Initialize().
+        // Initialize() sẽ ghi đè bằng dữ liệu thật từ disk.
+        PlayerData ??= CreateDefaultData();
+    }
+
     private void OnDestroy() { if (Instance == this) Instance = null; }
 
     private const string SaveKey = "HOLEXGAME_PLAYER_DATA";
 
-    /// <summary>Dữ liệu đang được load. Null cho đến khi Initialize() hoàn tất.</summary>
-    public PlayerData PlayerData { get; private set; }
 
     // =========================================================================
     // Public API
@@ -130,13 +138,55 @@ public class SaveManager : MonoBehaviour
 
     public async UniTask Initialize()
     {
-        PlayerData = await Load();
+        PlayerData = await Load(); // Load hoặc tại Default Profile
     }
+
+    private async UniTask<PlayerData> Load()
+    {
+        await UniTask.SwitchToMainThread();
+
+        if (!PlayerPrefs.HasKey(SaveKey))
+        {
+            PlayerData defaultData = CreateDefaultData(); // Tạo default Data
+            PlayerData = defaultData;
+            await Save();
+            return defaultData;
+        }
+
+        try
+        {
+            string encodedJson = PlayerPrefs.GetString(SaveKey);
+            string json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(encodedJson));
+            PlayerData loadedData = JsonUtility.FromJson<PlayerData>(json);
+
+            // Đảm bảo profile không null sau khi load save cũ.
+            if (loadedData != null && loadedData.profileData == null)
+                loadedData.profileData = new ProfileData();
+
+            // Deserialize List → Dictionary
+            if (loadedData != null)
+                loadedData.AfterDeserialization();
+
+            return loadedData ?? CreateDefaultData();
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"Save data is invalid. A new save will be created. {exception.Message}");
+
+            PlayerData defaultData = CreateDefaultData();
+            PlayerData = defaultData;
+            await Save();
+            return defaultData;
+        }
+    }
+
 
     public async UniTask Save()
     {
         if (PlayerData == null)
+        {
             PlayerData = CreateDefaultData();
+        }
 
         // Serialize Dictionary → List trước khi JsonUtility.ToJson
         PlayerData.PrepareForSerialization();
@@ -172,45 +222,7 @@ public class SaveManager : MonoBehaviour
     // Internal
     // =========================================================================
 
-    private async UniTask<PlayerData> Load()
-    {
-        await UniTask.SwitchToMainThread();
-
-        if (!PlayerPrefs.HasKey(SaveKey))
-        {
-            PlayerData defaultData = CreateDefaultData();
-            PlayerData = defaultData;
-            await Save();
-            return defaultData;
-        }
-
-        try
-        {
-            string encodedJson = PlayerPrefs.GetString(SaveKey);
-            string json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(encodedJson));
-            PlayerData loadedData = JsonUtility.FromJson<PlayerData>(json);
-
-            // Đảm bảo profile không null sau khi load save cũ.
-            if (loadedData != null && loadedData.profileData == null)
-                loadedData.profileData = new ProfileData();
-
-            // Deserialize List → Dictionary
-            if (loadedData != null)
-                loadedData.AfterDeserialization();
-
-            return loadedData ?? CreateDefaultData();
-        }
-        catch (Exception exception)
-        {
-            Debug.LogWarning($"Save data is invalid. A new save will be created. {exception.Message}");
-
-            PlayerData defaultData = CreateDefaultData();
-            PlayerData = defaultData;
-            await Save();
-            return defaultData;
-        }
-    }
-
+   
     private static PlayerData CreateDefaultData()
     {
         return new PlayerData

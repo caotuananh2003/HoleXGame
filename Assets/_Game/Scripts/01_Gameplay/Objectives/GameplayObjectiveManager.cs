@@ -10,8 +10,7 @@ using UnityEngine;
 ///   - Cập nhật tiến độ từng objective khi obstacle bị nuốt
 ///   - Fire event khi objective complete
 ///   - Fire event khi tất cả objectives complete (Win)
-/// 
-/// Managed by VContainer, injected vào GameplayController.
+///
 /// </summary>
 public class GameplayObjectiveManager : MonoBehaviour
 {

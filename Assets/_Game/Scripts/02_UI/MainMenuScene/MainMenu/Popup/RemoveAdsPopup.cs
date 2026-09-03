@@ -50,8 +50,9 @@ public class RemoveAdsPopup : PopupWindow
         // if (restoreButton  != null) restoreButton.onClick.AddListener(OnRestoreClicked);
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy();
         if (closeButton != null)
             closeButton.onClick.RemoveListener(OnCloseClicked);
 

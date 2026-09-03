@@ -65,7 +65,7 @@ public class GameTimer : MonoBehaviour
     {
         if (!running) return;
 
-        remaining -= Time.deltaTime;
+        remaining -= Time.fixedDeltaTime;
         OnTick?.Invoke(remaining);
 
         if (remaining <= 0f)

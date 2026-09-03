@@ -42,8 +42,12 @@ public class EditProfilePopup : PopupWindow
     private bool listsPopulated;
     private bool isStarted;
 
+    private SaveManager _saveManager;
+
     private void Start()
     {
+        _saveManager = SaveManager.Instance;
+
         isStarted = true;
         RegisterButtons();
 
@@ -55,12 +59,17 @@ public class EditProfilePopup : PopupWindow
     }
 
     private void OnEnable()  { if (!isStarted) return; RefreshOpenState(); }
-    private void OnDestroy() { UnregisterButtons(); ClearAllLists(); }
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        UnregisterButtons();
+        ClearAllLists();
+    }
 
     private void RefreshOpenState()
     {
-        if (SaveManager.Instance?.PlayerData == null || playerProfile == null) return;
-        savedSnapshot = SaveManager.Instance.PlayerData.profileData.Clone();
+        if (_saveManager?.PlayerData == null || playerProfile == null) return;
+        savedSnapshot = _saveManager.PlayerData.profileData.Clone();
         editingData   = savedSnapshot.Clone();
         ShowTab(ProfileTab.Avatar);
         RefreshNameText();
@@ -123,13 +132,13 @@ public class EditProfilePopup : PopupWindow
 
     private void OnSaveClicked()
     {
-        if (SaveManager.Instance?.PlayerData == null) { Debug.LogWarning("[EditProfilePopup] PlayerData is null."); return; }
-        var p = SaveManager.Instance.PlayerData.profileData;
+        if (_saveManager?.PlayerData == null) { Debug.LogWarning("[EditProfilePopup] PlayerData is null."); return; }
+        var p = _saveManager.PlayerData.profileData;
         p.selectedAvatarId = editingData.selectedAvatarId;
         p.selectedFrameId  = editingData.selectedFrameId;
         p.selectedBadgeId  = editingData.selectedBadgeId;
         p.playerName       = editingData.playerName;
-        SaveManager.Instance.Save().Forget();
+        _saveManager.Save().Forget();
         savedSnapshot = editingData.Clone();
         UIManager?.GetWindow<ProfilePopup>()?.RefreshPreview();
         UIManager?.GetWindow<MainmenuPanel>()?.RefreshPreview();

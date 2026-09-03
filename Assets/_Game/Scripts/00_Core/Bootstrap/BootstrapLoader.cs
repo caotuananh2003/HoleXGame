@@ -3,8 +3,13 @@ using UnityEngine;
 
 /// <summary>
 /// Điểm khởi động duy nhất của game.
-/// Điều phối thứ tự init theo đúng thứ tự async:
-///   Boot → Load save → Init audio → Register UI → Show MainMenu → Play BGM
+///
+/// Flow:
+///   1. ShowOverlayImmediate  — che màn hình ngay (không flash)
+///   2. ChangeState Boot
+///   3. Initialize các hệ thống (save, audio, ui)
+///   4. TransitionToMainMenuOnBootAsync — toggle sang MainMenu rồi hide overlay
+///   5. PlayBGM
 /// </summary>
 public class BootstrapLoader : MonoBehaviour
 {
@@ -12,23 +17,18 @@ public class BootstrapLoader : MonoBehaviour
 
     private async void Start()
     {
-        // Lấy Instance trong Start() để đảm bảo tất cả Awake() đã chạy xong
-        var gameManager       = GameManager.Instance;
-        var saveManager       = SaveManager.Instance;
-        var audioManager      = AudioManager.Instance;
-        var uiSceneRoot       = UISceneRoot.Instance;
-        var transitionService = TransitionService.Instance;
+        // Che màn hình ngay — player thấy loading thay vì flash scene trống
+        TransitionService.Instance.ShowOverlayImmediate();
 
-        gameManager.ChangeState(GameState.Boot);
+        GameManager.Instance.ChangeState(GameState.Boot);
 
-        await saveManager.Initialize();   // PlayerData phải có trước khi audio init
+        await SaveManager.Instance.Initialize();
+        AudioManager.Instance.Initialize();
+        UIManager.Instance.Initialize();
 
-        audioManager.Initialize();        // đọc bgmVolume/sfxVolume từ PlayerData
+        // Toggle sang MainMenu và hide overlay với animation
+        await TransitionService.Instance.TransitionToMainMenuAsync();
 
-        uiSceneRoot.RegisterAll();        // đăng ký toàn bộ UIWindow với UIManager
-
-        transitionService.ShowMainMenuImmediate(); // hiện MainMenu, ẩn Gameplay
-
-        audioManager.PlayBGM(MainMenuBGMId);
+        AudioManager.Instance.PlayBGM(MainMenuBGMId);
     }
 }

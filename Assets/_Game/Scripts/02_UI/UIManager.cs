@@ -16,12 +16,20 @@ public class UIManager : MonoBehaviour
     private void Awake()     { Instance = this; }
     private void OnDestroy() { if (Instance == this) Instance = null; }
 
+    [SerializeField] private Transform uiSceneRoot;
+
     private readonly Dictionary<Type, UIWindow> _windowsInScene = new();
     private UIWindow _currentScreen;
 
-    public void RegisterSceneUI(Transform root)
+    public void Initialize() // Lay ra danh sach windows (child cua UISceneRoot)
     {
-        UIWindow[] windows = root.GetComponentsInChildren<UIWindow>(true);
+        if (uiSceneRoot == null)
+        {
+            Debug.LogError("[UIManager] uiSceneRoot is not assigned.", this);
+            return;
+        }
+
+        UIWindow[] windows = uiSceneRoot.GetComponentsInChildren<UIWindow>(true);
 
         foreach (UIWindow window in windows)
         {
@@ -35,7 +43,7 @@ public class UIManager : MonoBehaviour
             _windowsInScene.Add(windowType, window);
         }
 
-        Debug.Log($"[UIManager] Registered {windows.Length} windows from '{root.name}'.");
+        Debug.Log($"[UIManager] Registered {windows.Length} windows from '{uiSceneRoot.name}'.");
     }
 
     public T Open<T>() where T : UIWindow

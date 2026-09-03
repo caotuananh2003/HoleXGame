@@ -1,18 +1,24 @@
 using System.Collections.Generic;
-
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
-/// Gắn vào BottomPanel GameObject cùng với BottomNavigationController.
+/// Gắn vào BottomPanel GameObject.
 /// Mode = Persistent: UIManager sẽ không bao giờ đóng panel này.
 /// Đặt Mode = Persistent trong Inspector.
+///
+/// Mỗi TabButton phải có LayoutElement gắn sẵn.
+/// unselectedFlexibleWidth = 2 (mặc định), selectedFlexibleWidth = 3 (khi selected).
 /// </summary>
 public class BottomPanel : UIWindow
 {
     [SerializeField] private ContentNavigator contentNavigator;
-    [SerializeField] private List<TabButton> tabs;
-    [SerializeField] private int defaultTabIndex = 2;
-    [SerializeField] private BottomTabLayoutAdjuster layoutAdjuster;
+    [SerializeField] private List<TabButton>  tabs;
+    [SerializeField] private int              defaultTabIndex = 2;
+
+    [Header("Tab Layout")]
+    [SerializeField] private float unselectedFlexibleWidth = 2f;
+    [SerializeField] private float selectedFlexibleWidth   = 3f;
 
     private int currentTabIndex = -1;
 
@@ -20,24 +26,23 @@ public class BottomPanel : UIWindow
     {
         if (contentNavigator == null)
         {
-            Debug.LogError("[BottomNavigationController] contentNavigator is not assigned in Inspector!");
+            Debug.LogError("[BottomPanel] contentNavigator is not assigned in Inspector!");
             return;
         }
 
         if (tabs == null || tabs.Count == 0)
         {
-            Debug.LogError("[BottomNavigationController] tabs list is empty!");
+            Debug.LogError("[BottomPanel] tabs list is empty!");
             return;
         }
 
-        // Init ContentNavigator trước để đảm bảo panelWidth đã được tính
         contentNavigator.Init();
 
         for (int i = 0; i < tabs.Count; i++)
         {
             if (tabs[i] == null)
             {
-                Debug.LogError($"[BottomNavigationController] tabs[{i}] is null!");
+                Debug.LogError($"[BottomPanel] tabs[{i}] is null!");
                 continue;
             }
             int index = i; // capture for closure
@@ -49,22 +54,24 @@ public class BottomPanel : UIWindow
 
     private void SelectTab(int index)
     {
-        Debug.Log($"[BottomNavigationController] SelectTab({index}), currentTabIndex={currentTabIndex}");
         if (index == currentTabIndex) return;
 
-        // Cập nhật visual state của các tab
         for (int i = 0; i < tabs.Count; i++)
+        {
             tabs[i].SetSelected(i == index);
+
+            LayoutElement layout = tabs[i].GetComponent<LayoutElement>();
+            if (layout != null)
+                layout.flexibleWidth = (i == index) ? selectedFlexibleWidth : unselectedFlexibleWidth;
+        }
 
         currentTabIndex = index;
         contentNavigator.NavigateTo(index);
-        layoutAdjuster?.NotifyTabSelected(index);
     }
 
     /// <summary>
     /// Chuyển sang panel có type T, đồng thời cập nhật tab highlight.
-    /// Gọi từ bên ngoài (ví dụ: MainmenuPanel.OnCurrencyClicked) khi cần
-    /// điều hướng mà không đi qua nút tab.
+    /// Gọi từ bên ngoài (ví dụ: MainmenuPanel.OnCurrencyClicked).
     /// </summary>
     public void NavigateToPanel<T>() where T : UIWindow
     {
