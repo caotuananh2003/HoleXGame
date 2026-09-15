@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d6c0f5d6bc8b0748a0759250b8cd81d, type: 3}
+  m_Name: PlayerProfile
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerProfile
+  HoleSkinDatabase: {fileID: 11400000, guid: 453553acf1c37294788bd94ef4d7a58d, type: 2}
+  MapThemeDatabase: {fileID: 11400000, guid: b3aa0a23697e7094fa628d8ff91c9fa5, type: 2}
+  ItemDefinitionList: []
+  AvatarDatabase: {fileID: 11400000, guid: ba88a5ba1ebbd8c4983204287d0dac59, type: 2}
+  FrameDatabase: {fileID: 11400000, guid: 30a4a2bb59ed96b438e63569bf580a50, type: 2}
+  BadgeDatabase: {fileID: 11400000, guid: bf5647e7f9598994cad2d7a0692b2830, type: 2}

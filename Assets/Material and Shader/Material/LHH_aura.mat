@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: LHH_aura
+  m_Shader: {fileID: 4800000, guid: 84cf39d93aed9b2408d379c332f3e763, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+      _Alpha_mask:
+        m_Texture: {fileID: 2800000, guid: 15b01f7e77f0e0346b080ed0418fa7cc, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _Base_Tex:
+        m_Texture: {fileID: 2800000, guid: ba1f7eb3c8f09c744878aeba4438da96, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _Color_Tex:
+        m_Texture: {fileID: 2800000, guid: 26fdbb6c42f579c4d88a6e8008ad4b96, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _DissolutionTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _Distort_mask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _FlowTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _MaskTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+      _texcoord:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: {}
+    m_Floats:
+      _All_power: 2
+      _Alpha: 1.25
+      _AlphaCutoff: 0.5
+      _Base_Alpha_costart: 1
+      _Base_costart: 1
+      _Base_distort_power: 0
+      _BumpScale: 1
+      _Choose_alpha: 3
+      _Color_disort: 0
+      _Cull: 0
+      _Cutoff: 0.5
+      _DetailNormalMapScale: 1
+      _Disslove_distort_power: 0
+      _Dissolve: 1
+      _Distance: 0
+      _Distort_power: 0
+      _DstBlend: 0
+      _GlossMapScale: 1
+      _Glossiness: 0.5
+      _GlossyReflections: 1
+      _Hardness: 22
+      _Mask_costart: 1
+      _Mask_distort_power: 0
+      _Mask_invert: 0
+      _Mask_power: 1
+      _Metallic: 0
+      _Mode: 0
+      _OcclusionStrength: 1
+      _Parallax: 0.02
+      _R_Use_one: 0
+      _Side_Color_power: 1
+      _SmoothnessTextureChannel: 0
+      _SpecularHighlights: 1
+      _SrcBlend: 1
+      _UVSec: 0
+      _ZWrite: 1
+      _Ztest: 4
+      _Zwrite: 0
+      _blend: 0
+      _frensel: -0.01
+      _frensel_edge: 0
+      _frensel_flip: 0
+      _mask_Choose_channel: 0
+      _mask_Choose_channel2: 0
+      _side: 0
+      _use_custom1_x_dissolve: 0
+      _use_custom1_y_distort: 0
+      _use_custom1_zw_base_uv: 0
+      _use_custom2_x_Color_sat: 0
+      _use_custom2_zw_mask_uv: 0
+      _use_frensel: 0
+    m_Colors:
+      _AllColor: {r: 1, g: 1, b: 1, a: 1}
+      _Base_speed: {r: 0, g: 0, b: 1, a: 0}
+      _Base_uv: {r: 1, g: 1, b: 0, a: 0}
+      _Color: {r: 1, g: 1, b: 1, a: 1}
+      _Color_uv: {r: 0.75, g: 0.1, b: 0, a: 0}
+      _Dissolve_speed: {r: 1, g: 0, b: 0, a: 0}
+      _Dissolve_uv: {r: 1, g: 1, b: 0, a: 0}
+      _Distort_repair: {r: 0, g: 0, b: 1, a: 1}
+      _Distort_speed1: {r: 1, g: 0, b: 0, a: 0}
+      _Distort_uv1: {r: 1, g: 1, b: 0, a: 0}
+      _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+      _Mask_speed: {r: 1, g: 0, b: 0, a: 0}
+      _Mask_uv: {r: 1, g: 1, b: 0, a: 0}
+      _R_dark_clolor: {r: 1, g: 1, b: 1, a: 0}
+      _R_light_color: {r: 1, g: 1, b: 1, a: 0}
+      _Side_Color: {r: 1, g: 1, b: 1, a: 0}
+      _color_change_HSV: {r: 0, g: 0, b: 0, a: 0}
+      _color_speed: {r: 0, g: -0.1, b: 1, a: 0}
+  m_BuildTextureStacks: []

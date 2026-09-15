@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e395ffbcf4da6f4ba26fe03e7d5b5da, type: 3}
+  m_Name: Cookie_Heart
+  m_EditorClassIdentifier: Assembly-CSharp::ObstacleDefinition
+  obstacleType: 0
+  scoreValue: 1
+  obstaclePrefab: {fileID: 5904135392074196963, guid: be32bff05d067a649b66832ec6e6af83, type: 3}
+  icon: {fileID: 21300000, guid: d742a259f89f1b14f94bef33133d533e, type: 3}
