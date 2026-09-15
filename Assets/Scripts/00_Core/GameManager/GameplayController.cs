@@ -19,7 +19,11 @@ public class GameplayController : MonoBehaviour
     [SerializeField] private KillerCollider      _killerCollider;
     [SerializeField] private HoleSkinApplier     _holeSkinApplier;
     [SerializeField] private MapThemeApplier     _mapThemeApplier;
-    [SerializeField] private CameraController _cameraController;
+    [SerializeField] private CameraController    _cameraController;
+
+    [Header("Win Effects")]
+    [Tooltip("Confetti ParticleSystem gắn trên Player. Play khi win, đợi xong rồi mới mở popup.")]
+    [SerializeField] private ParticleSystem _confettiParticle;
 
     private int currentLevelIndex;
     private void Awake()
@@ -132,7 +136,7 @@ public class GameplayController : MonoBehaviour
         float timeLimit = LevelManager.Instance.CurrentLevelDefinition != null
             ? LevelManager.Instance.CurrentLevelDefinition.TimeLimit
             : 120f;
-        _gameTimer?.StartTimer(timeLimit);
+        _gameTimer?.PrepareTimer(timeLimit);
 
         GameplayPanel gameplayPanel = UIManager.Instance.GetWindow<GameplayPanel>();
         if (gameplayPanel != null && LevelManager.Instance.CurrentLevelDefinition != null)
@@ -190,10 +194,22 @@ public class GameplayController : MonoBehaviour
 
     private async UniTaskVoid WaitThenOpenWinPopupAsync()
     {
+        // 1. Đợi fly animation của objective xong
         var objectiveManager = GameplayObjectiveManager.Instance;
         if (objectiveManager != null)
             await objectiveManager.WaitForAllAnimationsAsync();
 
+        // 2. Play confetti và đợi particle chạy xong (duration của particle system)
+        if (_confettiParticle != null)
+        {
+            _confettiParticle.gameObject.SetActive(true);
+            _confettiParticle.Play();
+            await UniTask.Delay(
+                System.TimeSpan.FromSeconds(_confettiParticle.main.duration),
+                cancellationToken: this.GetCancellationTokenOnDestroy());
+        }
+
+        // 3. Cleanup level và mở popup
         LevelManager.Instance.CleanupLevel();
 
         GameWinPopup panel = UIManager.Instance.Open<GameWinPopup>();

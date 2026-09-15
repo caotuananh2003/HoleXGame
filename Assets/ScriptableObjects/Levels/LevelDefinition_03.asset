@@ -14,21 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Gameplay.LevelDefinition
   levelIndex: 3
   levelName: Level3
-  levelPrefab: {fileID: 4213043930493073475, guid: 9eaef63fbcb10074e87e61147e5355e9, type: 3}
-  timeLimit: 90
-  currencyReward: 100
+  levelPrefab: {fileID: 975588656203935687, guid: 54a52c6043ec81b4b9e6201bbe693199, type: 3}
+  timeLimit: 180
+  currencyReward: 75
   levelObjectives:
-  - obstacleDefinition: {fileID: 11400000, guid: 5567f82748ec9f74087259690a6d42e2, type: 2}
-    requiredCount: 9
-  - obstacleDefinition: {fileID: 11400000, guid: e75d5f87aeae51c44987d670620d6828, type: 2}
-    requiredCount: 5
-  - obstacleDefinition: {fileID: 11400000, guid: 02aeffe5603de004f877e0b222d3258d, type: 2}
-    requiredCount: 5
-  - obstacleDefinition: {fileID: 11400000, guid: 59921b7307582f14b88e5e7cd3d5a5a9, type: 2}
-    requiredCount: 5
-  - obstacleDefinition: {fileID: 11400000, guid: 5c67ec6e05d58aa4b89e02740951477d, type: 2}
-    requiredCount: 5
-  - obstacleDefinition: {fileID: 11400000, guid: f83d8edc15b139b49b98944f538793b4, type: 2}
-    requiredCount: 5
-  - obstacleDefinition: {fileID: 11400000, guid: 9e9ec1cf60e448b4ba3a6bd25c0b73a5, type: 2}
-    requiredCount: 5
+  - obstacleDefinition: {fileID: 11400000, guid: 84c623f3d8c1a3643be74e7954b12156, type: 2}
+    requiredCount: 52
+  - obstacleDefinition: {fileID: 11400000, guid: afffeacada87f234a85d04a14d84a4b2, type: 2}
+    requiredCount: 4

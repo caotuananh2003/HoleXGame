@@ -59,7 +59,16 @@ public class SettingPopup : PopupWindow
         vibraButton.SetActive(am.IsVibrationEnabled);
     }
 
-    private void OnCloseClicked() => UIManager?.Close<SettingPopup>();
+    private void OnCloseClicked()
+    {
+        // Nếu đang ở Gameplay (pause từ in-game setting) thì unpause
+        if (GameManager.Instance != null && GameManager.Instance.IsState(GameState.Pause))
+        {
+            GameplayController.Instance?.Unpause();
+        }
+
+        UIManager?.Close<SettingPopup>();
+    }
 
     private void OnMusicClicked()
     {

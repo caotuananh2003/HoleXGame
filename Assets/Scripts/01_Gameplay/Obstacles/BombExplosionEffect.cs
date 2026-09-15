@@ -29,6 +29,7 @@ public class BombExplosionEffect : MonoBehaviour
             return;
         }
 
+        explosionParticle.gameObject.SetActive(true);
         explosionParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         explosionParticle.Play();
 

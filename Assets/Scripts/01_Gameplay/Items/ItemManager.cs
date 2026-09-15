@@ -15,7 +15,6 @@ public class ItemManager : MonoBehaviour
     }
 
     private HoleController holeController;
-    private GameTimer      gameTimer;
 
     private float       lastUseTime  = -999f;
     private const float ItemCooldown = 2f;
@@ -75,6 +74,8 @@ public class ItemManager : MonoBehaviour
             return false;
         }
 
+        GameTimer.Instance?.NotifyFirstInput();
+
         ITimedEffect timedEffect = ApplyItemEffects(item);
         ConsumeItem(item);
         lastUseTime = Time.time;
@@ -112,9 +113,10 @@ public class ItemManager : MonoBehaviour
             return false;
         }
 
+        GameTimer.Instance?.NotifyFirstInput();
+
         ITimedEffect timedEffect = ApplyItemEffects(item);
         lastUseTime = Time.time;
-
         OnItemUsed?.Invoke(item.ItemId);
         OnItemEffectStarted?.Invoke(item.ItemId, timedEffect);
         Debug.Log($"[ItemManager] [CHEAT] Used item '{item.ItemId}' (lock/quantity bypassed).");
@@ -161,11 +163,10 @@ public class ItemManager : MonoBehaviour
     private ITimedEffect ApplyItemEffects(ItemDefinition item)
     {
         if (holeController == null) holeController = FindAnyObjectByType<HoleController>();
-        if (gameTimer      == null) gameTimer      = FindAnyObjectByType<GameTimer>();
 
         if (holeController == null) { Debug.LogWarning("[ItemManager] HoleController not found."); return null; }
 
-        var context = new ItemEffectContext(holeController, gameTimer, holeController.transform);
+        var context = new ItemEffectContext(holeController, GameTimer.Instance, holeController.transform);
         ITimedEffect result = null;
 
         foreach (ItemEffectDefinition effectDef in item.Effects)

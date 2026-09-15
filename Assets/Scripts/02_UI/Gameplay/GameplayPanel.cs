@@ -372,6 +372,7 @@ public class GameplayPanel : UIWindow
     private void OnSettingClicked()
     {
         UIManager?.PlaySFX(AudioID.SFX.UiClick);
+        GameplayController.Instance?.Pause();
         UIManager?.Open<SettingPopup>();
     }
 

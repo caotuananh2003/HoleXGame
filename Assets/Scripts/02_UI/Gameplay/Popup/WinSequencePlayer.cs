@@ -21,9 +21,6 @@ using System.Collections.Generic;
 /// </summary>
 public class WinSequencePlayer : MonoBehaviour
 {
-    [Header("Phase 1 — Particle")]
-    [SerializeField] private ParticleSystem winParticle;
-
     [Header("Phase 1 — Victory Animation")]
     [SerializeField] private Animator      victoryAnimator;
     [SerializeField] private RectTransform victoryAnimRect;
@@ -86,7 +83,6 @@ public class WinSequencePlayer : MonoBehaviour
     #region Phase 1
     private async UniTask PlayPhase1Async()
     {
-        winParticle?.Play();
         victoryAnimator?.Play(0, 0, 0f);
 
         // Stars chạy độc lập, lệch nhau starDelay

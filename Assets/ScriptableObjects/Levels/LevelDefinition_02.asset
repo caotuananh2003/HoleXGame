@@ -14,11 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Gameplay.LevelDefinition
   levelIndex: 2
   levelName: Level2
-  levelPrefab: {fileID: 975588656203935687, guid: 54a52c6043ec81b4b9e6201bbe693199, type: 3}
+  levelPrefab: {fileID: 5775782457131563007, guid: 736066fee98c8f844bc17b3e298e3dcd, type: 3}
   timeLimit: 180
   currencyReward: 75
   levelObjectives:
-  - obstacleDefinition: {fileID: 11400000, guid: 84c623f3d8c1a3643be74e7954b12156, type: 2}
-    requiredCount: 52
-  - obstacleDefinition: {fileID: 11400000, guid: afffeacada87f234a85d04a14d84a4b2, type: 2}
-    requiredCount: 4
+  - obstacleDefinition: {fileID: 11400000, guid: fa98c8aa43d921340930423e96494286, type: 2}
+    requiredCount: 15
+  - obstacleDefinition: {fileID: 11400000, guid: 6c2c7855872c6214984c18e2e94cccbb, type: 2}
+    requiredCount: 15
+  - obstacleDefinition: {fileID: 11400000, guid: 0bebdca741141c5499983aa7bc5e42a0, type: 2}
+    requiredCount: 61
