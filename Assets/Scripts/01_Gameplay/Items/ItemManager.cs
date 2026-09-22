@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using System;
 
@@ -6,23 +5,27 @@ public class ItemManager : MonoBehaviour
 {
     public static ItemManager Instance { get; private set; }
 
-    private void Awake()     { Instance = this; }
+
+
+    [SerializeField] private HoleController _holeController;
+
+    private float       lastUseTime  = -999f;
+    private const float ItemCooldown = 1f;
+
+    public event Action<string>              OnItemUsed;
+    public event Action<string, string>      OnItemUseFailed;
+    public event Action<string, ITimedEffect> OnItemEffectStarted;
+    public event Action<string>              OnItemUnlocked;
+
+    private void Awake() {
+        Instance = this;
+    }
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
         OnItemUsed = null; OnItemUseFailed = null;
         OnItemEffectStarted = null; OnItemUnlocked = null;
     }
-
-    private HoleController holeController;
-
-    private float       lastUseTime  = -999f;
-    private const float ItemCooldown = 2f;
-
-    public event Action<string>              OnItemUsed;
-    public event Action<string, string>      OnItemUseFailed;
-    public event Action<string, ITimedEffect> OnItemEffectStarted;
-    public event Action<string>              OnItemUnlocked;
 
     // ── Unlock ────────────────────────────────────────────────────────────────
 
@@ -46,7 +49,7 @@ public class ItemManager : MonoBehaviour
             Debug.Log($"[ItemManager] Unlocked '{item.ItemId}'.");
         }
 
-        if (anythingUnlocked) SaveManager.Instance.Save().Forget();
+        if (anythingUnlocked) SaveManager.Instance.Save();
     }
 
     public bool IsItemUnlocked(ItemDefinition item)
@@ -79,7 +82,7 @@ public class ItemManager : MonoBehaviour
         ITimedEffect timedEffect = ApplyItemEffects(item);
         ConsumeItem(item);
         lastUseTime = Time.time;
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
 
         OnItemUsed?.Invoke(item.ItemId);
         OnItemEffectStarted?.Invoke(item.ItemId, timedEffect);
@@ -129,20 +132,20 @@ public class ItemManager : MonoBehaviour
     public int GetQuantity(string itemId)
     {
         if (SaveManager.Instance?.PlayerData == null) return 0;
-        return SaveManager.Instance.PlayerData.itemQuantities.TryGetValue(itemId, out int q) ? q : 0;
+        return SaveManager.Instance.PlayerData.itemQuantyDict.TryGetValue(itemId, out int q) ? q : 0;
     }
 
     public void SetQuantity(string itemId, int quantity)
     {
         if (SaveManager.Instance?.PlayerData == null) return;
-        SaveManager.Instance.PlayerData.itemQuantities[itemId] = Mathf.Max(0, quantity);
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.PlayerData.itemQuantyDict[itemId] = Mathf.Max(0, quantity);
+        SaveManager.Instance.Save();
     }
 
     public bool HasQuantityEntry(string itemId)
     {
         if (SaveManager.Instance?.PlayerData == null) return false;
-        return SaveManager.Instance.PlayerData.itemQuantities.ContainsKey(itemId);
+        return SaveManager.Instance.PlayerData.itemQuantyDict.ContainsKey(itemId);
     }
 
     public void AddQuantity(string itemId, int amount) => SetQuantity(itemId, GetQuantity(itemId) + amount);
@@ -162,11 +165,15 @@ public class ItemManager : MonoBehaviour
 
     private ITimedEffect ApplyItemEffects(ItemDefinition item)
     {
-        if (holeController == null) holeController = FindAnyObjectByType<HoleController>();
+        if (_holeController == null)
+        {
+            Debug.LogWarning("HoleController is null");
+            _holeController = FindAnyObjectByType<HoleController>();
+        }
 
-        if (holeController == null) { Debug.LogWarning("[ItemManager] HoleController not found."); return null; }
+        if (_holeController == null) { Debug.LogWarning("[ItemManager] HoleController not found."); return null; }
 
-        var context = new ItemEffectContext(holeController, GameTimer.Instance, holeController.transform);
+        var context = new ItemEffectContext(_holeController, GameTimer.Instance, _holeController.transform);
         ITimedEffect result = null;
 
         foreach (ItemEffectDefinition effectDef in item.Effects)
@@ -182,6 +189,6 @@ public class ItemManager : MonoBehaviour
     {
         if (SaveManager.Instance?.PlayerData == null) return;
         int current = GetQuantity(item.ItemId);
-        SaveManager.Instance.PlayerData.itemQuantities[item.ItemId] = Mathf.Max(0, current - 1);
+        SaveManager.Instance.PlayerData.itemQuantyDict[item.ItemId] = Mathf.Max(0, current - 1);
     }
 }

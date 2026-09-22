@@ -93,7 +93,7 @@ public class GameOverBombPopup : UIWindow
         if (SaveManager.Instance.PlayerData.currency < RebornCost) { Debug.LogWarning("[GameOverBombPopup] Không đủ vàng."); return; }
 
         SaveManager.Instance.PlayerData.currency -= RebornCost;
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
 
         UIManager?.Close<GameOverBombPopup>();
         GameplayController.Instance?.RebornPlayer();

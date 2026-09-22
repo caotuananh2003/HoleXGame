@@ -42,12 +42,21 @@ public class GameManager : MonoBehaviour
     {
         if (pause)
         {
-            // Save...
+            // Save khi app pause (mobile minimize, alt-tab, etc.)
+            SaveManager.Instance?.Save();
+            Debug.Log("[GameManager] OnApplicationPause — saved.");
         }
     }
 
     private void OnApplicationQuit()
     {
-        // Save...
+        // Save ĐỒNG BỘ khi tắt app — PHẢI chờ hoàn tất trước khi quit
+        // Dùng SaveSynchronous() thay vì Save().GetAwaiter().GetResult()
+        // vì UniTask.GetAwaiter().GetResult() có thể throw nếu task chưa complete
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.Save();
+            Debug.Log("[GameManager] OnApplicationQuit — saved.");
+        }
     }
 }

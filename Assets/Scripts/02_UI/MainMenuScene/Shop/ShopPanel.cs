@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -109,7 +108,7 @@ public class ShopPanel : UIWindow
         if (playerProfile.MapThemeDatabase != null)
             foreach (var def in playerProfile.MapThemeDatabase.MapThemeDefinition)
                 if (def.UnlockedByDefault && !SaveManager.Instance.PlayerData.unlockedMapThemeIds.Contains(def.Id)) { SaveManager.Instance.PlayerData.unlockedMapThemeIds.Add(def.Id); dirty = true; }
-        if (dirty) SaveManager.Instance.Save().Forget();
+        if (dirty) SaveManager.Instance.Save();
     }
 
     private bool IsHoleSkinUnlocked(string id) => SaveManager.Instance?.PlayerData != null && SaveManager.Instance.PlayerData.unlockedHoleSkinIds.Contains(id);
@@ -131,26 +130,26 @@ public class ShopPanel : UIWindow
 
     private void OnHoleSkinBuyByCurrencyClicked(string id) { var def = playerProfile.HoleSkinDatabase?.GetById(id); if (def != null && RemoveCurrency(def.Price)) UnlockHoleSkin(id); }
     private void OnHoleSkinBuyByAdsClicked(string id)      { UnlockHoleSkin(id); }
-    private void OnHoleSkinEquipClicked(string id)         { if (SaveManager.Instance?.PlayerData == null) return; SaveManager.Instance.PlayerData.equippedHoleSkinId = id; SaveManager.Instance.Save().Forget(); OnHoleSkinItemClicked(id); }
+    private void OnHoleSkinEquipClicked(string id)         { if (SaveManager.Instance?.PlayerData == null) return; SaveManager.Instance.PlayerData.equippedHoleSkinId = id; SaveManager.Instance.Save(); OnHoleSkinItemClicked(id); }
 
     private void UnlockHoleSkin(string id)
     {
         if (SaveManager.Instance?.PlayerData == null) return;
         if (!SaveManager.Instance.PlayerData.unlockedHoleSkinIds.Contains(id)) SaveManager.Instance.PlayerData.unlockedHoleSkinIds.Add(id);
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
         holeSkinItems.Find(x => x.ItemId == id)?.SetUnlocked(true);
         OnHoleSkinItemClicked(id);
     }
 
     private void OnMapThemeBuyByCurrencyClicked(string id) { var def = playerProfile.MapThemeDatabase?.GetById(id); if (def != null && RemoveCurrency(def.Price)) UnlockMapTheme(id); }
     private void OnMapThemeBuyByAdsClicked(string id)      { UnlockMapTheme(id); }
-    private void OnMapThemeEquipClicked(string id)         { if (SaveManager.Instance?.PlayerData == null) return; SaveManager.Instance.PlayerData.equippedMapThemeId = id; SaveManager.Instance.Save().Forget(); OnMapThemeItemClicked(id); }
+    private void OnMapThemeEquipClicked(string id)         { if (SaveManager.Instance?.PlayerData == null) return; SaveManager.Instance.PlayerData.equippedMapThemeId = id; SaveManager.Instance.Save(); OnMapThemeItemClicked(id); }
 
     private void UnlockMapTheme(string id)
     {
         if (SaveManager.Instance?.PlayerData == null) return;
         if (!SaveManager.Instance.PlayerData.unlockedMapThemeIds.Contains(id)) SaveManager.Instance.PlayerData.unlockedMapThemeIds.Add(id);
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
         mapThemeItems.Find(x => x.ItemId == id)?.SetUnlocked(true);
         OnMapThemeItemClicked(id);
     }
@@ -183,8 +182,8 @@ public class ShopPanel : UIWindow
         foreach (var item in mapThemeItems) if (item != null) item.OnClicked -= OnMapThemeItemClicked; mapThemeItems.Clear();
     }
 
-    private void AddCurrency(int amount)    { if (SaveManager.Instance?.PlayerData == null) return; SaveManager.Instance.PlayerData.currency += amount; SaveManager.Instance.Save().Forget(); RefreshCurrency(); }
-    private bool RemoveCurrency(int amount) { if (SaveManager.Instance?.PlayerData == null) return false; if (SaveManager.Instance.PlayerData.currency < amount) return false; SaveManager.Instance.PlayerData.currency -= amount; SaveManager.Instance.Save().Forget(); RefreshCurrency(); return true; }
+    private void AddCurrency(int amount)    { if (SaveManager.Instance?.PlayerData == null) return; SaveManager.Instance.PlayerData.currency += amount; SaveManager.Instance.Save(); RefreshCurrency(); }
+    private bool RemoveCurrency(int amount) { if (SaveManager.Instance?.PlayerData == null) return false; if (SaveManager.Instance.PlayerData.currency < amount) return false; SaveManager.Instance.PlayerData.currency -= amount; SaveManager.Instance.Save(); RefreshCurrency(); return true; }
 
     private void Update()
     {

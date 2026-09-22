@@ -13,12 +13,14 @@ public class ObstaclePatternPlacer : EditorWindow
 
     private enum PatternType
     {
-        Square,
-        Rectangle,
+        FilledRectangle,
+        HollowRectangle,
         FilledCircle,
         HollowCircle,
-        Triangle,
+        FilledTriangle,
+        HollowTriangle,
         Pyramid,
+        Cube,
     }
 
     // ── Fields ────────────────────────────────────────────────────────────────
@@ -27,13 +29,16 @@ public class ObstaclePatternPlacer : EditorWindow
     private GameObject _prefab;
 
     // Pattern
-    private PatternType _patternType = PatternType.Square;
-    private float       _sideLength  = 5f;   // Square, Triangle
+    private PatternType _patternType = PatternType.FilledRectangle;
+    private float       _sideLength  = 5f;   // Triangle
     private float       _rectCols    = 5f;   // Rectangle — số object theo trục X
     private float       _rectRows    = 3f;   // Rectangle — số object theo trục Z
     private float       _radius      = 3f;   // Circle, Pyramid
     private float       _spacing     = 1f;   // khoảng cách tối thiểu
-    private float       _objectHeight = 1f;  // Pyramid — chiều cao 1 object (để xếp sát nhau)
+    private float       _objectHeight = 1f;  // Pyramid, Cube — chiều cao 1 object
+    private float       _cubeCols    = 3f;   // Cube — số object theo X
+    private float       _cubeRows    = 3f;   // Cube — số object theo Z
+    private float       _cubeLayers  = 3f;   // Cube — số tầng theo Y
 
     // Vị trí trung tâm
     private Vector3 _center = Vector3.zero;
@@ -118,30 +123,32 @@ public class ObstaclePatternPlacer : EditorWindow
 
         switch (_patternType)
         {
-            case PatternType.Square:
-                _sideLength = Mathf.Max(1f, EditorGUILayout.FloatField("Số object mỗi cạnh", _sideLength));
-                break;
-
-            case PatternType.Rectangle:
+            case PatternType.FilledRectangle:
+            case PatternType.HollowRectangle:
                 _rectCols = Mathf.Max(1f, EditorGUILayout.FloatField("Số object theo chiều ngang (X)", _rectCols));
                 _rectRows = Mathf.Max(1f, EditorGUILayout.FloatField("Số object theo chiều dọc (Z)",   _rectRows));
                 break;
 
             case PatternType.FilledCircle:
-                _radius = Mathf.Max(1f, EditorGUILayout.FloatField("Số vòng", _radius));
-                break;
-
             case PatternType.HollowCircle:
                 _radius = Mathf.Max(1f, EditorGUILayout.FloatField("Số vòng", _radius));
                 break;
 
-            case PatternType.Triangle:
+            case PatternType.FilledTriangle:
+            case PatternType.HollowTriangle:
                 _sideLength = Mathf.Max(1f, EditorGUILayout.FloatField("Số tầng", _sideLength));
                 break;
 
             case PatternType.Pyramid:
                 _radius       = Mathf.Max(1f,   EditorGUILayout.FloatField("Số vòng",           _radius));
                 _objectHeight = Mathf.Max(0.01f, EditorGUILayout.FloatField("Chiều cao 1 object", _objectHeight));
+                break;
+
+            case PatternType.Cube:
+                _cubeCols    = Mathf.Max(1f,    EditorGUILayout.FloatField("Số object theo X",       _cubeCols));
+                _cubeRows    = Mathf.Max(1f,    EditorGUILayout.FloatField("Số object theo Z",       _cubeRows));
+                _cubeLayers  = Mathf.Max(1f,    EditorGUILayout.FloatField("Số tầng theo Y",         _cubeLayers));
+                _objectHeight = Mathf.Max(0.01f, EditorGUILayout.FloatField("Chiều cao 1 object (Y)", _objectHeight));
                 break;
         }
 
@@ -221,6 +228,11 @@ public class ObstaclePatternPlacer : EditorWindow
         Undo.SetCurrentGroupName("Spawn Obstacle Pattern");
         int group = Undo.GetCurrentGroup();
 
+        const RigidbodyConstraints freezeRot =
+            RigidbodyConstraints.FreezeRotationX |
+            RigidbodyConstraints.FreezeRotationY |
+            RigidbodyConstraints.FreezeRotationZ;
+
         foreach (Vector3 pos in points)
         {
             GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(_prefab);
@@ -229,6 +241,10 @@ public class ObstaclePatternPlacer : EditorWindow
 
             if (_parent != null)
                 go.transform.SetParent(_parent, true);
+
+            // Freeze rotation X Y Z trên tất cả Rigidbody trong object (kể cả child)
+            foreach (Rigidbody rb in go.GetComponentsInChildren<Rigidbody>())
+                rb.constraints |= freezeRot;
 
             Undo.RegisterCreatedObjectUndo(go, "Spawn Obstacle");
         }
@@ -243,49 +259,40 @@ public class ObstaclePatternPlacer : EditorWindow
     {
         return _patternType switch
         {
-            PatternType.Square       => GenerateSquare(),
-            PatternType.Rectangle    => GenerateRectangle(),
-            PatternType.FilledCircle => GenerateFilledCircle(),
-            PatternType.HollowCircle => GenerateHollowCircle(),
-            PatternType.Triangle     => GenerateTriangle(),
-            PatternType.Pyramid      => GeneratePyramid(),
-            _                        => new List<Vector3>()
+            PatternType.FilledRectangle => GenerateRectangle(hollow: false),
+            PatternType.HollowRectangle => GenerateRectangle(hollow: true),
+            PatternType.FilledCircle    => GenerateFilledCircle(),
+            PatternType.HollowCircle    => GenerateHollowCircle(),
+            PatternType.FilledTriangle  => GenerateTriangle(hollow: false),
+            PatternType.HollowTriangle  => GenerateTriangle(hollow: true),
+            PatternType.Pyramid         => GeneratePyramid(),
+            PatternType.Cube            => GenerateCube(),
+            _                           => new List<Vector3>()
         };
     }
 
-    // Hình vuông — _sideLength = số object trên mỗi cạnh, cách nhau _spacing
-    private List<Vector3> GenerateSquare()
+    // Hình chữ nhật — filled hoặc hollow (chỉ viền)
+    // cols = số object theo X, rows = số object theo Z
+    private List<Vector3> GenerateRectangle(bool hollow)
     {
         var points = new List<Vector3>();
 
-        int   count     = Mathf.Max(1, Mathf.RoundToInt(_sideLength));
-        float totalSize = (count - 1) * _spacing;
-        float half      = totalSize / 2f;
-
-        for (int row = 0; row < count; row++)
-        for (int col = 0; col < count; col++)
-        {
-            float x = _center.x - half + col * _spacing;
-            float z = _center.z - half + row * _spacing;
-            points.Add(new Vector3(x, 0f, z));
-        }
-
-        return points;
-    }
-
-    // Hình chữ nhật — _rectCols = số object theo X, _rectRows = số object theo Z
-    private List<Vector3> GenerateRectangle()
-    {
-        var points = new List<Vector3>();
-
-        int   cols      = Mathf.Max(1, Mathf.RoundToInt(_rectCols));
-        int   rows      = Mathf.Max(1, Mathf.RoundToInt(_rectRows));
-        float halfX     = (cols - 1) * _spacing / 2f;
-        float halfZ     = (rows - 1) * _spacing / 2f;
+        int   cols  = Mathf.Max(1, Mathf.RoundToInt(_rectCols));
+        int   rows  = Mathf.Max(1, Mathf.RoundToInt(_rectRows));
+        float halfX = (cols - 1) * _spacing / 2f;
+        float halfZ = (rows - 1) * _spacing / 2f;
 
         for (int row = 0; row < rows; row++)
         for (int col = 0; col < cols; col++)
         {
+            if (hollow)
+            {
+                // 1x1 hoặc 1xN: không có interior → spawn tất cả
+                bool onEdge = row == 0 || row == rows - 1
+                           || col == 0 || col == cols - 1;
+                if (!onEdge) continue;
+            }
+
             float x = _center.x - halfX + col * _spacing;
             float z = _center.z - halfZ + row * _spacing;
             points.Add(new Vector3(x, 0f, z));
@@ -343,27 +350,39 @@ public class ObstaclePatternPlacer : EditorWindow
         }
     }
 
-    // Hình tam giác đều xuôi — đỉnh nhọn hướng lên (Z+), đáy hướng xuống (Z-)
+    // Hình tam giác — filled hoặc hollow (chỉ 3 cạnh viền)
+    // Đỉnh nhọn hướng lên (Z+), đáy hướng xuống (Z-)
     // _sideLength = số tầng. Tầng 1 (đỉnh) = 1 object, tầng N (đáy) = N objects.
-    // Khoảng cách ngang giữa object: _spacing. Khoảng cách dọc giữa hàng: _spacing * sin(60°).
-    private List<Vector3> GenerateTriangle()
+    private List<Vector3> GenerateTriangle(bool hollow)
     {
         var points = new List<Vector3>();
 
-        int   rows     = Mathf.Max(1, Mathf.RoundToInt(_sideLength));
-        float rowStep  = _spacing * Mathf.Sqrt(3f) / 2f; // khoảng cách dọc giữa 2 hàng
-
-        // Tổng chiều cao của tam giác
+        int   rows        = Mathf.Max(1, Mathf.RoundToInt(_sideLength));
+        float rowStep     = _spacing * Mathf.Sqrt(3f) / 2f;
         float totalHeight = (rows - 1) * rowStep;
 
         for (int row = 0; row < rows; row++)
         {
-            int   colCount  = row + 1;                          // hàng 0 = 1 object, hàng N-1 = N objects
-            float rowWidth  = (colCount - 1) * _spacing;        // độ rộng của hàng hiện tại
-            float z         = _center.z + totalHeight / 2f - row * rowStep; // đỉnh ở Z+, đáy ở Z-
+            int   colCount = row + 1;
+            float rowWidth = (colCount - 1) * _spacing;
+            float z        = _center.z + totalHeight / 2f - row * rowStep;
 
             for (int col = 0; col < colCount; col++)
             {
+                if (hollow && rows > 2)
+                {
+                    // Viền tam giác gồm:
+                    //   - Hàng đỉnh (row 0): object duy nhất
+                    //   - Hàng đáy (row cuối): toàn bộ object
+                    //   - Cạnh trái: col == 0
+                    //   - Cạnh phải: col == row (object cuối của mỗi hàng)
+                    bool onEdge = row == 0
+                               || row == rows - 1
+                               || col == 0
+                               || col == row;
+                    if (!onEdge) continue;
+                }
+
                 float x = _center.x - rowWidth / 2f + col * _spacing;
                 points.Add(new Vector3(x, 0f, z));
             }
@@ -397,6 +416,34 @@ public class ObstaclePatternPlacer : EditorWindow
                     points.Add(new Vector3(basePos.x, y, basePos.z));
                 }
             }
+        }
+
+        return points;
+    }
+    // Hình khối vuông 3D — xếp các object thành lưới cols × rows × layers
+    // _cubeCols = số object theo X, _cubeRows = số object theo Z, _cubeLayers = số tầng theo Y
+    // _spacing = khoảng cách giữa các object theo X và Z
+    // _objectHeight = khoảng cách giữa các tầng theo Y
+    private List<Vector3> GenerateCube()
+    {
+        var points = new List<Vector3>();
+
+        int cols   = Mathf.Max(1, Mathf.RoundToInt(_cubeCols));
+        int rows   = Mathf.Max(1, Mathf.RoundToInt(_cubeRows));
+        int layers = Mathf.Max(1, Mathf.RoundToInt(_cubeLayers));
+
+        float halfX = (cols   - 1) * _spacing     / 2f;
+        float halfZ = (rows   - 1) * _spacing     / 2f;
+        float baseY = _center.y;
+
+        for (int layer = 0; layer < layers; layer++)
+        for (int row   = 0; row   < rows;   row++)
+        for (int col   = 0; col   < cols;   col++)
+        {
+            float x = _center.x - halfX + col   * _spacing;
+            float y = baseY             + layer  * _objectHeight;
+            float z = _center.z - halfZ + row    * _spacing;
+            points.Add(new Vector3(x, y, z));
         }
 
         return points;

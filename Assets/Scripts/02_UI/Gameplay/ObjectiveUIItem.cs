@@ -74,7 +74,10 @@ public class ObjectiveUIItem : MonoBehaviour
     {
         if (objective == null || progressText == null) return;
 
-        progressText.text = $"{objective.CurrentCount}/{objective.RequiredCount}";
+        int remaining = objective.RequiredCount - objective.CurrentCount;
+        if (remaining < 0) remaining = 0;
+
+        progressText.text = remaining.ToString();
 
         if (objective.IsCompleted)
             progressText.color = Color.green;

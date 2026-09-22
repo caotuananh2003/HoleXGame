@@ -6,6 +6,8 @@ using System;
 ///
 /// Chỉ lưu ID — không lưu Sprite, Image, hay bất kỳ UnityEngine.Object nào.
 /// Sprite được resolve tại runtime qua Database (AvatarDatabase, FrameDatabase, BadgeDatabase).
+/// 
+/// Bất kỳ class nào được nhúng như field bên trong class khác mà muốn JsonUtility.ToJson() serialize được, thì class đó phải có [Serializable].
 /// </summary>
 [Serializable]
 public class ProfileData

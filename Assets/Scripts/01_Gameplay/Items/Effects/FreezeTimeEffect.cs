@@ -28,6 +28,10 @@ public class FreezeTimeEffect : MonoBehaviour, ITimedEffect
     [Tooltip("Thời gian fade out overlay (giây).")]
     [SerializeField] private float fadeOutDuration = 0.4f;
 
+    [Header("Particle")]
+    [Tooltip("ParticleSystem child của FreezeTime object. Stop Action = Disable đã cài trong Inspector.")]
+    [SerializeField] private ParticleSystem freezeParticle;
+
     // ── ITimedEffect ──────────────────────────────────────────────────────────
 
     public float Remaining
@@ -116,13 +120,38 @@ public class FreezeTimeEffect : MonoBehaviour, ITimedEffect
             freezeOverlay.DOFade(1f, fadeInDuration);
         }
 
+        // Enable particle rồi play — duration được sync với freeze duration, trừ startLifetime
+        // để particle ngừng emit đúng lúc freeze hết (các particle đang bay sẽ tắt đúng thời điểm)
+        // Stop Action = Disable tự tắt khi hết
+        if (freezeParticle != null)
+        {
+            var main = freezeParticle.main;
+            main.duration = Mathf.Max(0f, duration - main.startLifetime.constantMax);
+
+            freezeParticle.gameObject.SetActive(true);
+            freezeParticle.Play();
+        }
+
         Debug.Log("[FreezeTimeEffect] Initialized — duration=" + duration + "s. Timer paused.");
     }
 
     /// <summary>Extend duration khi dùng lần 2 trong khi còn active.</summary>
     public void ExtendDuration(float additionalTime)
     {
-        remaining += additionalTime;
+        remaining     += additionalTime;
+        totalDuration += additionalTime;
+
+        // Restart particle với duration mới, trừ startLifetime
+        if (freezeParticle != null)
+        {
+            var main = freezeParticle.main;
+            main.duration = Mathf.Max(0f, remaining - main.startLifetime.constantMax);
+
+            freezeParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            freezeParticle.gameObject.SetActive(true);
+            freezeParticle.Play();
+        }
+
         Debug.Log("[FreezeTimeEffect] Extended by " + additionalTime + "s. Remaining: " + remaining.ToString("F1") + "s.");
     }
 
@@ -155,5 +184,39 @@ public class FreezeTimeEffect : MonoBehaviour, ITimedEffect
         }
 
         Debug.Log("[FreezeTimeEffect] Deactivated — timer resumed.");
+    }
+
+    /// <summary>
+    /// Tắt overlay ngay lập tức không có animation.
+    /// Gọi từ GameplayController.Cleanup() khi về MainMenu hoặc restart.
+    /// </summary>
+    public void ForceDeactivate()
+    {
+        if (!isInitialized) return;
+
+        isInitialized = false;
+
+        DOTween.Kill(freezeOverlay);
+
+        if (freezeOverlay != null)
+        {
+            freezeOverlay.alpha = 0f;
+            freezeOverlay.gameObject.SetActive(false);
+        }
+
+        // Stop particle ngay lập tức
+        if (freezeParticle != null && freezeParticle.gameObject.activeSelf)
+        {
+            freezeParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            freezeParticle.gameObject.SetActive(false);
+        }
+
+        if (OnExpired != null)
+        {
+            OnExpired.Invoke();
+            OnExpired = null;
+        }
+
+        Debug.Log("[FreezeTimeEffect] ForceDeactivated.");
     }
 }

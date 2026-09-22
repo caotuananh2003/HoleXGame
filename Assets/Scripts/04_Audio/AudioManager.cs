@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -84,7 +83,7 @@ public class AudioManager : MonoBehaviour
         if (SaveManager.Instance?.PlayerData != null)
         {
             SaveManager.Instance.PlayerData.bgmVolume = v;
-            SaveManager.Instance.Save().Forget();
+            SaveManager.Instance.Save();
         }
     }
 
@@ -95,7 +94,7 @@ public class AudioManager : MonoBehaviour
         if (SaveManager.Instance?.PlayerData != null)
         {
             SaveManager.Instance.PlayerData.sfxVolume = v;
-            SaveManager.Instance.Save().Forget();
+            SaveManager.Instance.Save();
         }
     }
 
@@ -133,7 +132,7 @@ public class AudioManager : MonoBehaviour
     {
         if (SaveManager.Instance?.PlayerData == null) return;
         SaveManager.Instance.PlayerData.isVibrationEnabled = enabled;
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
     }
 
     #region Helpers

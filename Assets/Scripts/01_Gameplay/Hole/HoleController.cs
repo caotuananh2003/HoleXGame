@@ -32,6 +32,9 @@ public class HoleController : MonoBehaviour
     private float              currentSpeed;
     private HoleMovement       holeMovement;
     private HoleSizeController holeSizeController;
+    private IncreaseSizeEffect increaseSizeEffect;
+    private SpeedBoosterEffect speedBoosterEffect;
+    private EnergyBoosterEffect energyBoosterEffect;
 
     private int score;
     private int nextMilestoneIndex;
@@ -53,6 +56,12 @@ public class HoleController : MonoBehaviour
     public event Action<int, float> OnProgressChanged;
 
     /// <summary>
+    /// Fire khi swallow Clock booster. UI subscribe để play fly icon → timerText.
+    /// Tham số: (icon sprite, hole world position, booster value in seconds)
+    /// </summary>
+    public event Action<Sprite, Vector3, float> OnClockBoosterSwallowed;
+
+    /// <summary>
     /// Fire khi vượt milestone và hole grow.
     /// Tham số: level mới (bắt đầu từ 2 khi grow lần đầu).
     /// </summary>
@@ -66,6 +75,9 @@ public class HoleController : MonoBehaviour
     {
         holeMovement       = GetComponent<HoleMovement>();
         holeSizeController = GetComponent<HoleSizeController>();
+        increaseSizeEffect  = GetComponentInChildren<IncreaseSizeEffect>();
+        speedBoosterEffect  = GetComponentInChildren<SpeedBoosterEffect>();
+        energyBoosterEffect = GetComponentInChildren<EnergyBoosterEffect>();
         floatingScorePool  = FindAnyObjectByType<FloatingScorePool>();
 
         currentSpeed = initialSpeed;
@@ -104,7 +116,8 @@ public class HoleController : MonoBehaviour
         nextMilestoneIndex = 0;
         currentSpeed       = initialSpeed;
 
-        // Reset movement speed
+        // Reset movement speed (tắt luôn speed boost nếu đang active)
+        speedBoosterEffect?.ForceDeactivate();
         holeMovement?.SetSpeed(currentSpeed);
 
         // Reset vị trí player về origin
@@ -137,23 +150,28 @@ public class HoleController : MonoBehaviour
     }
 
     /// <summary>
-    /// Grow hole thủ công (từ item). Fire OnLevelUp để UI cập nhật.
-    /// Không ảnh hưởng đến score hay milestone tracking.
+    /// Cộng trực tiếp vào score và chạy qua CheckGrowMilestones() —
+    /// giống hệt swallow. Gọi từ IncreaseSizeEffectDefinition.
     /// </summary>
-    public void GrowHoleManually()
+    public void AddScore(int amount)
     {
-        if (holeSizeController == null) return;
+        HandleScoreAdded(amount);
+    }
 
-        holeSizeController.GrowHole();
+    /// <summary>
+    /// Khoảng điểm của milestone hiện tại (milestone[n] - milestone[n-1]).
+    /// Dùng bởi IncreaseSizeEffectDefinition: cộng thêm đúng lượng này bất kể
+    /// score hiện tại đang ở đâu trong khoảng — tránh hard-code "chỉ đủ để chạm ngưỡng".
+    ///
+    /// Ví dụ: score=15, milestone[0]=30 → range=30 → AddScore(30) → score=45 → vượt milestone.
+    /// Trả về 0 nếu đã max level.
+    /// </summary>
+    public int ScoreRangeOfCurrentLevel()
+    {
+        if (nextMilestoneIndex >= GrowMilestones.Length) return 0;
 
-        // Tăng level hiển thị (không dựa vào milestone)
-        int currentLevel = nextMilestoneIndex + 1;
-        OnLevelUp?.Invoke(currentLevel + 1);
-
-        // Update progress bar (giữ nguyên progress, chỉ tăng level)
-        FireProgressChanged();
-
-        Debug.Log($"[HoleController] Manually grew hole. New display level: {currentLevel + 1}");
+        int prev = nextMilestoneIndex > 0 ? GrowMilestones[nextMilestoneIndex - 1] : 0;
+        return GrowMilestones[nextMilestoneIndex] - prev;
     }
 
     // =========================================================================
@@ -169,7 +187,7 @@ public class HoleController : MonoBehaviour
 
     /// <summary>
     /// Callback từ HoleSizeController.OnGrown.
-    /// Tăng speed thêm speedPerGrow mỗi lần hole grow.
+    /// Tăng speed mỗi lần hole grow (cả score path lẫn item path đều qua đây).
     /// </summary>
     private void HandleGrown()
     {
@@ -188,6 +206,7 @@ public class HoleController : MonoBehaviour
             int newLevel = nextMilestoneIndex + 1;
             Debug.Log($"[HoleController] Grow! score={score}, milestone={GrowMilestones[nextMilestoneIndex - 1]}");
             holeSizeController.GrowHole();
+            increaseSizeEffect?.Play();
             OnLevelUp?.Invoke(newLevel);
         }
     }
@@ -220,14 +239,73 @@ public class HoleController : MonoBehaviour
     {
         if (obstacle?.ObstacleDefinition == null) return;
 
-        // Score
-        HandleScoreAdded(obstacle.ObstacleDefinition.ScoreValue);
+        ObstacleDefinition def = obstacle.ObstacleDefinition;
 
-        // Floating text — spawn ngẫu nhiên quanh player, bán kính = 0.5 * scale player
+        Debug.Log($"[HoleController] Swallowed: {obstacle.gameObject.name}, Type={def.Type}");
+
+        if (def.Type == ObstacleType.Booster)
+        {
+            Debug.Log($"[HoleController] Booster detected: {def.BoosterType}, value={def.BoosterValue}");
+            HandleBooster(def);
+            return;
+        }
+
+        // Normal obstacle — cộng score như bình thường
+        HandleScoreAdded(def.ScoreValue);
+
         if (floatingScorePool != null)
         {
             float playerRadius = 0.5f * transform.localScale.x;
-            floatingScorePool.Spawn(obstacle.ObstacleDefinition.ScoreValue, transform.position, playerRadius);
+            floatingScorePool.Spawn(def.ScoreValue, transform.position, playerRadius);
+        }
+    }
+
+    private void HandleBooster(ObstacleDefinition def)
+    {
+        switch (def.BoosterType)
+        {
+            case BoosterType.Energy:
+                HandleScoreAdded((int)def.BoosterValue);
+                energyBoosterEffect?.Play();
+                if (floatingScorePool != null)
+                {
+                    float r = 0.5f * transform.localScale.x;
+                    floatingScorePool.Spawn((int)def.BoosterValue, transform.position, r);
+                }
+                Debug.Log($"[HoleController] Energy booster — +{(int)def.BoosterValue} score.");
+                break;
+
+            case BoosterType.Clock:
+                // Fire event để UI play fly animation, AddTime sẽ được gọi khi icon đến nơi
+                if (OnClockBoosterSwallowed != null)
+                {
+                    OnClockBoosterSwallowed.Invoke(def.Icon, transform.position, def.BoosterValue);
+                }
+                else
+                {
+                    // Không có UI subscriber — cộng thời gian ngay
+                    GameTimer.Instance?.AddTime(def.BoosterValue);
+                }
+                Debug.Log($"[HoleController] Clock booster — +{def.BoosterValue}s.");
+                break;
+
+            case BoosterType.Speed:
+                // Tăng tốc độ tạm thời qua SpeedBoosterEffect
+                if (speedBoosterEffect != null)
+                {
+                    speedBoosterEffect.Activate(
+                        bonus:             def.BoosterValue,
+                        duration:          def.BoosterDuration,
+                        getBaseSpeedFunc:  () => currentSpeed,
+                        applySpeedAction:  s => holeMovement?.SetSpeed(s)
+                    );
+                }
+                else
+                {
+                    Debug.LogWarning("[HoleController] SpeedBoosterEffect not found on Player.");
+                }
+                Debug.Log($"[HoleController] Speed booster — x{def.BoosterValue} for {def.BoosterDuration}s.");
+                break;
         }
     }
 
@@ -239,7 +317,8 @@ public class HoleController : MonoBehaviour
         if (killerCollider != null)
             killerCollider.OnObjectSwallowed -= HandleObjectSwallowed;
 
-        OnProgressChanged = null;
-        OnLevelUp         = null;
+        OnProgressChanged        = null;
+        OnLevelUp                = null;
+        OnClockBoosterSwallowed  = null;
     }
 }

@@ -72,8 +72,10 @@ public class FloatingScoreText : MonoBehaviour
         Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(camera, worldPos);
 
         // Screen → Canvas local position
+        // Dùng canvas.worldCamera thay vì null để hỗ trợ cả Screen Space-Camera lẫn Overlay
+        Canvas canvas = canvasRect.GetComponent<Canvas>();
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect, screenPoint, null, // null vì Screen Overlay không cần camera
+            canvasRect, screenPoint, canvas != null ? canvas.worldCamera : null,
             out Vector2 localPoint);
 
         return localPoint;

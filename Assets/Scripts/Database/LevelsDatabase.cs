@@ -11,7 +11,17 @@ public class LevelsDatabase : ScriptableObject
 {
     [SerializeField] private List<LevelDefinition> levels = new List<LevelDefinition>();
 
-    public int TotalLevels => levels?.Count ?? 0;
+    public int TotalLevels
+    {
+        get
+        {
+            if (levels == null)
+            {
+                return 0;
+            }
+            return levels.Count;
+        }
+    }
 
     public LevelDefinition GetLevel(int index)
     {

@@ -96,7 +96,7 @@ public class MainmenuPanel : UIWindow
         else
             Debug.LogError("Cannot spawn badge");
 
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
     }
 
     public void RefreshPreview()  => _profilePreview.Refresh(SaveManager.Instance.PlayerData.profileData);

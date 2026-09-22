@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
@@ -48,7 +47,7 @@ public class MapThemeApplier : MonoBehaviour
 
         string defaultId = db.MapThemeDefinition[0].Id;
         SaveManager.Instance.PlayerData.equippedMapThemeId = defaultId;
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
     }
 
     private void ApplyCurrentTheme()

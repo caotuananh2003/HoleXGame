@@ -11,7 +11,9 @@ using UnityEngine;
 /// HoleColliderController vẫn được notify qua OnGrown vì hole2DCollider là object
 /// riêng trong scene 2D, không phải child của Player.
 ///
-/// GrowHole(): tween transform.localScale += Vector3.one, fire OnGrown khi done.
+/// Visual feedback (particle + squash) được xử lý bởi IncreaseSizeEffect — không phải ở đây.
+///
+/// GrowHole(): tween transform.localScale, fire OnGrown khi done.
 /// Reset(): đưa scale về initialScale.
 /// </summary>
 public class HoleSizeController : MonoBehaviour
@@ -28,12 +30,12 @@ public class HoleSizeController : MonoBehaviour
     [Tooltip("Scale ban đầu của Player. Reset() sẽ đưa về giá trị này.")]
     [SerializeField] private Vector3 initialScale = Vector3.one;
 
-    // ── Runtime state ──────────────────────────────────────────────────────────
+    // ── Runtime state ─────────────────────────────────────────────────────────
     public float GrowDuration => growDuration;
 
     private bool isGrowing;
 
-    // ── Events ─────────────────────────────────────────────────────────────────
+    // ── Events ────────────────────────────────────────────────────────────────
     /// <summary>Fire sau khi grow animation hoàn tất.</summary>
     public event Action OnGrown;
 
@@ -47,12 +49,18 @@ public class HoleSizeController : MonoBehaviour
             Debug.LogWarning("[HoleSizeController] holeColliderController is null — assign in Inspector.");
     }
 
+    private void OnDestroy()
+    {
+        DOTween.Kill(transform);
+    }
+
     // =========================================================================
     // Public API
     // =========================================================================
 
     /// <summary>
-    /// Tăng hole 1 bậc: tween localScale += Vector3.one.
+    /// Tăng hole 1 bậc: tween localScale += 0.4.
+    /// Visual feedback (particle, squash) do IncreaseSizeEffect xử lý riêng.
     /// Gọi từ HoleController khi đủ điểm milestone hoặc dùng item.
     /// </summary>
     public void GrowHole()
@@ -87,14 +95,5 @@ public class HoleSizeController : MonoBehaviour
         holeColliderController?.SetRadius(initialScale.x);
 
         Debug.Log("[HoleSizeController] Reset to initial scale.");
-    }
-
-    // =========================================================================
-    // Unity lifecycle
-    // =========================================================================
-
-    private void OnDestroy()
-    {
-        DOTween.Kill(transform);
     }
 }

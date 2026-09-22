@@ -82,7 +82,7 @@ public class GameOverTimeUpPopup : UIWindow
         if (SaveManager.Instance.PlayerData.currency < ReviveCurrencyCost) { Debug.Log($"[GameOverTimeUpPopup] Không đủ {ReviveCurrencyCost} currency."); return; }
 
         SaveManager.Instance.PlayerData.currency -= ReviveCurrencyCost;
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
         Revive();
     }
 

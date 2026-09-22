@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -89,7 +88,7 @@ public class EditorItemCheatController : MonoBehaviour
         if (saveManager?.PlayerData == null) return;
 
         saveManager.PlayerData.currency += 1000;
-        saveManager.Save().Forget();
+        saveManager.Save();
 
         Debug.Log($"[EditorItemCheat] [Q] Added 1000 currency. Total: {saveManager.PlayerData.currency}");
     }

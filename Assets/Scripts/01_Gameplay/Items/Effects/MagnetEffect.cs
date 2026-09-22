@@ -159,6 +159,36 @@ public class MagnetEffect : MonoBehaviour, ITimedEffect
         Debug.Log("[MagnetEffect] Deactivated.");
     }
 
+    /// <summary>
+    /// Tắt ngay lập tức — dùng khi Cleanup (về MainMenu, restart).
+    /// Dừng particle và tắt object ngay không chờ StopAction.
+    /// </summary>
+    public void ForceDeactivate()
+    {
+        if (!isInitialized) return;
+
+        isInitialized = false;
+        remaining     = 0f;
+
+        if (rootParticle != null && rootParticle.isPlaying)
+        {
+            rootParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
+        if (magnetParticle != null)
+        {
+            magnetParticle.SetActive(false);
+        }
+
+        if (OnExpired != null)
+        {
+            OnExpired.Invoke();
+            OnExpired = null;
+        }
+
+        Debug.Log("[MagnetEffect] ForceDeactivated.");
+    }
+
     private void ApplyMagnetForce()
     {
         if (holeTransform == null)

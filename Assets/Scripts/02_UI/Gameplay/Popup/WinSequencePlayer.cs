@@ -86,7 +86,12 @@ public class WinSequencePlayer : MonoBehaviour
         victoryAnimator?.Play(0, 0, 0f);
 
         // Stars chạy độc lập, lệch nhau starDelay
-        var starTasks = new UniTask[starSpawnPoints?.Length ?? 0];
+        int starCount = 0;
+        if (starSpawnPoints != null)
+        {
+            starCount = starSpawnPoints.Length;
+        }
+        var starTasks = new UniTask[starCount];
         for (int i = 0; i < starTasks.Length; i++)
             starTasks[i] = PlayOneStarSlotAsync(i, starDelay * i);
 

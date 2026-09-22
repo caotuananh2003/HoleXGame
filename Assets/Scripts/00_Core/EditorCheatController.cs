@@ -23,8 +23,16 @@ public class EditorCheatController : MonoBehaviour
     private void ResetSaveData()
     {
         if (SaveManager.Instance == null) { Debug.LogWarning("[EditorCheatController] SaveManager.Instance is null."); return; }
+
+        // Yêu cầu giữ Shift+R để tránh bấm nhầm
+        if (!Keyboard.current.leftShiftKey.isPressed && !Keyboard.current.rightShiftKey.isPressed)
+        {
+            Debug.Log("[EditorCheatController] Giữ Shift+R để xóa save data.");
+            return;
+        }
+
         SaveManager.Instance.DeleteSaveData();
-        Debug.Log("[EditorCheatController] [R] Save data đã xóa.");
+        Debug.Log("[EditorCheatController] [Shift+R] Save data đã xóa.");
     }
 
     private void CheatWin()

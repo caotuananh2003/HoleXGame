@@ -27,8 +27,8 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float followSmoothTime = 0.15f;
 
     [Header("Initial Offset")]
-    [SerializeField] private float initialOffsetY = 8f;
-    [SerializeField] private float initialOffsetZ = 5f;
+    [SerializeField] private float initialOffsetY = 10f;
+    [SerializeField] private float initialOffsetZ = 6f;
 
     [Header("Grow Step")]
     [SerializeField] private float cameraStepY  = 1f;

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f984e3a4c81c2b24e97d1ecdb9c581b2, type: 3}
+  m_Name: LevelDefinition_14
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Gameplay.LevelDefinition
+  levelIndex: 14
+  levelName: Level14
+  levelPrefab: {fileID: 7500774108277624348, guid: de9d815bafadcbb4aafa929048a34138, type: 3}
+  timeLimit: 200
+  currencyReward: 100
+  levelObjectives:
+  - obstacleDefinition: {fileID: 11400000, guid: a552b614739a2dd44bd9f8b2fa4be569, type: 2}
+    requiredCount: 54
+  - obstacleDefinition: {fileID: 11400000, guid: b077f34a6b997824fad9953b0e1800fb, type: 2}
+    requiredCount: 16
+  - obstacleDefinition: {fileID: 11400000, guid: ab47853969d0e3e40bc1f351ee47bfee, type: 2}
+    requiredCount: 8
+  - obstacleDefinition: {fileID: 11400000, guid: 620aba1446d62b74eaabbc557e08cb68, type: 2}
+    requiredCount: 6
+  - obstacleDefinition: {fileID: 11400000, guid: 999448baeb900824b82079f8b48109fe, type: 2}
+    requiredCount: 1

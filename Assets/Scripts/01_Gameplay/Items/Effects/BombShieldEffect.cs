@@ -209,8 +209,8 @@ public class BombShieldEffect : MonoBehaviour, ITimedEffect
         Debug.Log("[BombShieldEffect] Deactivated.");
     }
 
-    /// <summary>Tắt ngay lập tức không chờ animation — dùng khi có shield mới thay thế.</summary>
-    private void ForceDeactivate()
+    /// <summary>Tắt ngay lập tức không chờ animation — dùng khi có shield mới thay thế hoặc Cleanup.</summary>
+    public void ForceDeactivate()
     {
         isDeactivating = true;
         isInitialized  = false;

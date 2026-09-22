@@ -3,20 +3,26 @@ using UnityEngine;
 
 /// <summary>
 /// Tạo lực hút thẳng đứng (Vector3.down) cho các obstacle đang nằm trong trigger của hố.
-/// Lực này cộng thêm vào gravity sẵn có — obstacle sẽ rơi nhanh hơn so với rơi tự nhiên.
+///
+/// Khi obstacle vào trigger:
+///   - Unfreeze rotation X Y Z vĩnh viễn (không restore khi rời trigger)
+///   - Apply suction force mỗi FixedUpdate cho đến khi rời trigger
 ///
 /// Setup:
 ///   Gắn script này lên cùng GameObject có SphereCollider (Is Trigger) của Player.
-///   SphereCollider đó đã được dùng bởi HoleColliderController — dùng chung, không cần tạo thêm.
 /// </summary>
 public class HoleSuctionEffect : MonoBehaviour
 {
     [Tooltip("Gia tốc hút xuống (m/s²). Cộng thêm vào gravity. Giá trị dương = hút xuống.")]
-    [SerializeField] private float suctionAcceleration = 15f;
+    [SerializeField] private float suctionAcceleration = 5f;
 
-    // Track các Rigidbody đang trong trigger để apply lực mỗi FixedUpdate.
-    // HashSet: O(1) add/remove, không bị duplicate.
+    private const RigidbodyConstraints FreezeRotationAll =
+        RigidbodyConstraints.FreezeRotationX |
+        RigidbodyConstraints.FreezeRotationY |
+        RigidbodyConstraints.FreezeRotationZ;
+
     private readonly HashSet<Rigidbody> _inTrigger = new();
+    private readonly List<Rigidbody>    _toRemove  = new();
 
     // =========================================================================
     // Unity lifecycle
@@ -26,8 +32,12 @@ public class HoleSuctionEffect : MonoBehaviour
     {
         Rigidbody rb = other.attachedRigidbody;
         if (rb == null || rb.isKinematic) return;
+        if (_inTrigger.Contains(rb)) return;
 
         _inTrigger.Add(rb);
+
+        // Unfreeze rotation vĩnh viễn — không lưu lại để restore
+        rb.constraints &= ~FreezeRotationAll;
     }
 
     private void OnTriggerExit(Collider other)
@@ -42,12 +52,10 @@ public class HoleSuctionEffect : MonoBehaviour
     {
         if (_inTrigger.Count == 0) return;
 
-        // Cache để tránh modify collection trong vòng lặp
         _toRemove.Clear();
 
         foreach (Rigidbody rb in _inTrigger)
         {
-            // Guard: object bị destroy hoặc deactivate trong lúc còn trong trigger
             if (rb == null || !rb.gameObject.activeInHierarchy)
             {
                 _toRemove.Add(rb);
@@ -61,24 +69,14 @@ public class HoleSuctionEffect : MonoBehaviour
             _inTrigger.Remove(rb);
     }
 
-    // Buffer tái sử dụng để tránh GC alloc trong FixedUpdate
-    private readonly List<Rigidbody> _toRemove = new();
-
-    // =========================================================================
-    // Cleanup
-    // =========================================================================
-
     private void OnDisable()
     {
-        // Khi hole bị disable (restart level), xóa hết để tránh apply lực cho
-        // object không còn trong trigger
         _inTrigger.Clear();
     }
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
-        // Visualize vùng trigger trong Scene view
         SphereCollider sc = GetComponent<SphereCollider>();
         if (sc == null) return;
 

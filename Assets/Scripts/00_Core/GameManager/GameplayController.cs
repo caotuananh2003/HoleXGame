@@ -25,6 +25,14 @@ public class GameplayController : MonoBehaviour
     [Tooltip("Confetti ParticleSystem gắn trên Player. Play khi win, đợi xong rồi mới mở popup.")]
     [SerializeField] private ParticleSystem _confettiParticle;
 
+    [Header("Effects")]
+    [Tooltip("FreezeTimeEffect gắn trên Player. ForceDeactivate() khi Cleanup để tắt overlay.")]
+    [SerializeField] private FreezeTimeEffect _freezeTimeEffect;
+    [Tooltip("BombShieldEffect gắn trên ShieldParent.")]
+    [SerializeField] private BombShieldEffect _bombShieldEffect;
+    [Tooltip("MagnetEffect gắn trên MagnetParent.")]
+    [SerializeField] private MagnetEffect     _magnetEffect;
+
     private int currentLevelIndex;
     private void Awake()
     {
@@ -49,7 +57,14 @@ public class GameplayController : MonoBehaviour
 
     public void StartLevel()
     {
-        currentLevelIndex = SaveManager.Instance?.PlayerData?.currentLevelIndex ?? -1;
+        if (SaveManager.Instance != null && SaveManager.Instance.PlayerData != null)
+        {
+            currentLevelIndex = SaveManager.Instance.PlayerData.currentLevelIndex;
+        }
+        else
+        {
+            currentLevelIndex = -1;
+        }
         if (currentLevelIndex < 0) currentLevelIndex = _startLevelIndex;
         InitLevel();
     }
@@ -66,6 +81,9 @@ public class GameplayController : MonoBehaviour
         Time.timeScale = 1f;
         _holeController?.SetInputEnabled(false);
         _gameTimer?.StopTimer();
+        _freezeTimeEffect?.ForceDeactivate();
+        _bombShieldEffect?.ForceDeactivate();
+        _magnetEffect?.ForceDeactivate();
         LevelManager.Instance?.CleanupLevel();
         UnsubscribeEvents();
         Debug.Log("[GameplayController] Cleanup done.");
@@ -213,7 +231,11 @@ public class GameplayController : MonoBehaviour
         LevelManager.Instance.CleanupLevel();
 
         GameWinPopup panel = UIManager.Instance.Open<GameWinPopup>();
-        int reward = LevelManager.Instance.CurrentLevelDefinition?.CurrencyReward ?? 0;
+        int reward = 0;
+        if (LevelManager.Instance.CurrentLevelDefinition != null)
+        {
+            reward = LevelManager.Instance.CurrentLevelDefinition.CurrencyReward;
+        }
         panel?.Setup(reward);
     }
 
@@ -259,7 +281,7 @@ public class GameplayController : MonoBehaviour
 
         int nextIndex = LevelManager.Instance.GetNextLevelIndex(currentLevelIndex);
         SaveManager.Instance.PlayerData.currentLevelIndex = nextIndex;
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
 
         Debug.Log($"[GameplayController] Level advanced: {currentLevelIndex} → {nextIndex}.");
     }

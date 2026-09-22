@@ -204,7 +204,10 @@ public class GameplayPanel : UIWindow
     {
         // GameplayObjectiveManager nằm trong gameplayGroup (inactive lúc Start) →
         // Instance chỉ có sau khi gameplayGroup.SetActive(true), resolve lazy ở đây.
-        _gameplayObjectiveManager ??= GameplayObjectiveManager.Instance;
+        if (_gameplayObjectiveManager == null)
+        {
+            _gameplayObjectiveManager = GameplayObjectiveManager.Instance;
+        }
 
         if (objectives == null || objectivesContainer == null || objectiveItemPrefab == null)
         {

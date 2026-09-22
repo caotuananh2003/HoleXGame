@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class HoleSkinApplier : MonoBehaviour
@@ -50,7 +49,7 @@ public class HoleSkinApplier : MonoBehaviour
 
         string defaultId = db.HoleDefinition[0].Id;
         SaveManager.Instance.PlayerData.equippedHoleSkinId = defaultId;
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
     }
 
     private void ApplyCurrentSkin()

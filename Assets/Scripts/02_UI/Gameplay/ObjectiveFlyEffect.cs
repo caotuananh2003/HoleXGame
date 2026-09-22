@@ -17,9 +17,11 @@ public class ObjectiveFlyEffect : MonoBehaviour
 {
     [Header("References")]
     [Tooltip("Prefab chứa Image component dùng làm icon bay.")]
-    [SerializeField] private Image     iconPrefab;
-    [SerializeField] private Canvas    canvas;
-    [SerializeField] private Camera    mainCamera;
+    [SerializeField] private Image  iconPrefab;
+    [SerializeField] private Canvas canvas;
+    [SerializeField] private Camera mainCamera;
+    // eventCamera không cần expose — lấy trực tiếp từ canvas.worldCamera
+    // (null nếu Overlay, UICamera nếu SS-Camera — Unity tự quản lý)
 
     [Header("Pool")]
     [SerializeField] private int initialPoolSize = 8;
@@ -112,29 +114,24 @@ public class ObjectiveFlyEffect : MonoBehaviour
         _pool.Enqueue(img);
     }
 
-    /// <summary>Convert world position → anchoredPosition trên Screen Overlay Canvas.</summary>
+    /// <summary>Convert world position → anchoredPosition trên Canvas.</summary>
     private Vector2 WorldToCanvasPosition(Vector3 worldPos, RectTransform canvasRect)
     {
         Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(mainCamera, worldPos);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect, screenPoint, null, out Vector2 localPoint);
+            canvasRect, screenPoint, canvas.worldCamera, out Vector2 localPoint);
         return localPoint;
     }
 
-    /// <summary>Lấy anchoredPosition của một RectTransform bất kỳ quy về gốc toạ độ của Canvas.</summary>
-    private static Vector2 GetCanvasPosition(RectTransform target, RectTransform canvasRect)
+    private Vector2 GetCanvasPosition(RectTransform target, RectTransform canvasRect)
     {
-        // Dùng corners của target để lấy screen position trung tâm
         Vector3[] corners = new Vector3[4];
         target.GetWorldCorners(corners);
-
-        // Tâm = trung bình 4 góc
         Vector3 centerWorld = (corners[0] + corners[1] + corners[2] + corners[3]) / 4f;
 
-        // Canvas Overlay: world corners của UI = screen position (pixel) trực tiếp
-        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(null, centerWorld);
+        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, centerWorld);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect, screenPoint, null, out Vector2 localPoint);
+            canvasRect, screenPoint, canvas.worldCamera, out Vector2 localPoint);
         return localPoint;
     }
 

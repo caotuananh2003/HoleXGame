@@ -82,7 +82,7 @@ public class GameWinPopup : UIWindow
     {
         if (SaveManager.Instance?.PlayerData == null) { Debug.LogError("[GameWinPopup] PlayerData is null."); return; }
         SaveManager.Instance.PlayerData.currency += amount;
-        SaveManager.Instance.Save().Forget();
+        SaveManager.Instance.Save();
     }
 
     private void Validate()

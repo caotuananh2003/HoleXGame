@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -77,7 +76,17 @@ public class EditProfilePopup : PopupWindow
     }
 
     public void ApplyNameFromPopup(string newName) { editingData.playerName = newName; profilePreview.SetName(newName); RefreshNameText(); }
-    public string CurrentEditingName => editingData?.playerName ?? string.Empty;
+    public string CurrentEditingName
+    {
+        get
+        {
+            if (editingData == null)
+            {
+                return string.Empty;
+            }
+            return editingData.playerName;
+        }
+    }
 
     private void ShowTab(ProfileTab tab)
     {
@@ -138,7 +147,7 @@ public class EditProfilePopup : PopupWindow
         p.selectedFrameId  = editingData.selectedFrameId;
         p.selectedBadgeId  = editingData.selectedBadgeId;
         p.playerName       = editingData.playerName;
-        _saveManager.Save().Forget();
+        _saveManager.Save();
         savedSnapshot = editingData.Clone();
         UIManager?.GetWindow<ProfilePopup>()?.RefreshPreview();
         UIManager?.GetWindow<MainmenuPanel>()?.RefreshPreview();

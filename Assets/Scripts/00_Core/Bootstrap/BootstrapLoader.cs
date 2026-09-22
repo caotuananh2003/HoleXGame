@@ -22,7 +22,6 @@ public class BootstrapLoader : MonoBehaviour
 
         GameManager.Instance.ChangeState(GameState.Boot);
 
-        await SaveManager.Instance.Initialize();
         AudioManager.Instance.Initialize();
         UIManager.Instance.Initialize();
 
